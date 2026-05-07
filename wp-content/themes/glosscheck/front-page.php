@@ -166,7 +166,8 @@ $theme_uri = get_template_directory_uri();
             #app.sidebar-collapsed .sidebar .sidebar-label,
             #app.sidebar-collapsed .sidebar .sidebar-meta,
             #app.sidebar-collapsed .sidebar .sidebar-section,
-            #app.sidebar-collapsed .sidebar .del-btn { display: none!important; }
+            #app.sidebar-collapsed .sidebar .chat-menu-btn,
+            #app.sidebar-collapsed .sidebar .chat-context-menu { display: none!important; }
             #app.sidebar-collapsed .sidebar .sidebar-top { padding: 16px 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
             #app.sidebar-collapsed .sidebar .sidebar-head { flex-direction: column; justify-content: flex-start; align-items: center; gap: 10px; margin-bottom: 0; }
             #app.sidebar-collapsed .sidebar .sidebar-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; }
@@ -198,14 +199,22 @@ $theme_uri = get_template_directory_uri();
         }
 
         .chat-item {
-            padding: 12px 14px; border-radius: 16px; cursor: pointer;
+            position: relative; padding: 12px 14px; border-radius: 16px; cursor: pointer;
             transition: background 0.2s, border-color 0.2s; border: 1px solid transparent;
         }
         .chat-item:hover { background: rgba(255,255,255,0.035); }
         .chat-item.active { background: rgba(65,240,165,0.075); border-color: rgba(65,240,165,0.17); box-shadow: inset 0 1px 0 rgba(255,255,255,.035); }
-        .chat-item .del-btn { opacity: 0; transition: opacity 0.2s, color 0.2s; color: var(--muted); cursor: pointer; padding: 2px 5px; border-radius: 4px; }
-        .chat-item:hover .del-btn { opacity: 1; }
-        .chat-item .del-btn:hover { color: #f87171; }
+        .chat-menu-btn { width: 26px; height: 26px; border-radius: 999px; color: var(--muted); opacity: 0; transition: opacity .18s, color .18s, background .18s, border-color .18s; border: 1px solid transparent; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .chat-item:hover .chat-menu-btn,
+        .chat-menu-btn.open { opacity: 1; }
+        .chat-menu-btn:hover,
+        .chat-menu-btn.open { color: var(--text); background: rgba(255,255,255,.06); border-color: rgba(224,244,229,.14); }
+        .chat-context-menu { position: absolute; top: 34px; right: 10px; z-index: 70; min-width: 172px; padding: 6px; border-radius: 14px; background: rgba(249,252,247,.97); color: #17211d; border: 1px solid rgba(20,30,26,.12); box-shadow: 0 18px 44px rgba(0,0,0,.28); backdrop-filter: blur(16px); cursor: default; }
+        .chat-context-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; font-size: 13px; line-height: 1.15; color: #17211d; transition: background .16s, color .16s; text-align: left; }
+        .chat-context-item:hover { background: rgba(8,18,15,.07); }
+        .chat-context-item.danger { color: #dc2626; }
+        .chat-context-item.danger:hover { background: rgba(220,38,38,.08); }
+        .chat-context-item i { width: 14px; text-align: center; font-size: 12px; }
 
         .status-dot { animation: sPulse 2.5s ease-in-out infinite; }
         @keyframes sPulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,214,143,0.4)} 50%{box-shadow:0 0 0 4px rgba(0,214,143,0)} }
@@ -461,6 +470,7 @@ $theme_uri = get_template_directory_uri();
         let serverChats = [];
         let authTab = 'login';
         let bannerDismissed = false;
+        let chatMenuOpenId = null;
         let sidebarCollapsed = localStorage.getItem('gc_sidebar_collapsed') === '1';
 
         function ownerKey() {
@@ -494,13 +504,23 @@ $theme_uri = get_template_directory_uri();
             const idx = serverChats.findIndex(c => c.id === chat.id);
             if (idx >= 0) serverChats[idx] = chat;
             else serverChats.unshift(chat);
-            serverChats.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+            sortChats();
+        }
+
+        function sortChats() {
+            serverChats.sort((a, b) => {
+                if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+                return (b.updatedAt || 0) - (a.updatedAt || 0);
+            });
         }
 
         async function loadServerChats() {
             const data = await chatApi('glosscheck_chat_list');
             serverChats = data.chats || [];
-            if (serverChats.length > 0) openChat(serverChats[0].id);
+            sortChats();
+            const requestedChat = new URLSearchParams(window.location.search).get('chat');
+            const initialChat = requestedChat && serverChats.some(c => c.id === requestedChat) ? requestedChat : serverChats[0]?.id;
+            if (initialChat) openChat(initialChat);
             else await createNewChat();
         }
 
@@ -598,7 +618,11 @@ $theme_uri = get_template_directory_uri();
         /* Закрытие модалки по клику на оверлей */
         $('authModal').addEventListener('click', e => { if (e.target === $('authModal')) closeAuthModal(); });
         /* Закрытие по Escape */
-        document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('authModal').classList.contains('open')) closeAuthModal(); });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && $('authModal').classList.contains('open')) closeAuthModal();
+            if (e.key === 'Escape') closeChatMenu();
+        });
+        document.addEventListener('click', closeChatMenu);
 
         /* ===== УПРАВЛЕНИЕ ЧАТАМИ ===== */
         function getActiveChats() {
@@ -606,6 +630,7 @@ $theme_uri = get_template_directory_uri();
         }
         function saveActiveChats(chats) {
             serverChats = chats;
+            sortChats();
         }
 
         async function createNewChat() {
@@ -620,6 +645,7 @@ $theme_uri = get_template_directory_uri();
         }
 
         function openChat(chatId) {
+            chatMenuOpenId = null;
             curChatId = chatId;
             const chats = getActiveChats();
             const chat = chats.find(c => c.id === chatId);
@@ -632,7 +658,8 @@ $theme_uri = get_template_directory_uri();
         }
 
         async function deleteChat(chatId, e) {
-            e.stopPropagation();
+            if (e) e.stopPropagation();
+            closeChatMenu();
             try {
                 await chatApi('glosscheck_chat_delete', { chat_id: chatId });
                 let chats = getActiveChats().filter(c => c.id !== chatId);
@@ -645,6 +672,68 @@ $theme_uri = get_template_directory_uri();
             } catch (err) {
                 toast(err.message, 'error');
             }
+        }
+
+        async function renameChat(chatId, e) {
+            if (e) e.stopPropagation();
+            const chat = getActiveChats().find(c => c.id === chatId);
+            closeChatMenu();
+            if (!chat) return;
+            const title = window.prompt('Новое название диалога', chat.title || 'Новый диалог');
+            if (title === null) return;
+            const cleaned = title.trim();
+            if (!cleaned) {
+                toast('Название не может быть пустым', 'error');
+                return;
+            }
+            try {
+                const data = await chatApi('glosscheck_chat_rename', { chat_id: chatId, title: cleaned });
+                upsertChat(data.chat);
+                renderChatList();
+                toast('Диалог переименован', 'success');
+            } catch (err) {
+                toast(err.message, 'error');
+            }
+        }
+
+        async function togglePinChat(chatId, e) {
+            if (e) e.stopPropagation();
+            const chat = getActiveChats().find(c => c.id === chatId);
+            closeChatMenu();
+            if (!chat) return;
+            try {
+                const data = await chatApi('glosscheck_chat_pin', { chat_id: chatId, pinned: chat.pinned ? 0 : 1 });
+                upsertChat(data.chat);
+                renderChatList();
+                toast(data.chat.pinned ? 'Диалог закреплён' : 'Диалог откреплён', 'success');
+            } catch (err) {
+                toast(err.message, 'error');
+            }
+        }
+
+        async function shareChat(chatId, e) {
+            if (e) e.stopPropagation();
+            closeChatMenu();
+            const url = new URL(window.location.href);
+            url.searchParams.set('chat', chatId);
+            try {
+                await navigator.clipboard.writeText(url.toString());
+                toast('Ссылка на диалог скопирована', 'success');
+            } catch {
+                toast('Не удалось скопировать ссылку', 'error');
+            }
+        }
+
+        function openChatMenu(chatId, e) {
+            e.stopPropagation();
+            chatMenuOpenId = chatMenuOpenId === chatId ? null : chatId;
+            renderChatList();
+        }
+
+        function closeChatMenu() {
+            if (!chatMenuOpenId) return;
+            chatMenuOpenId = null;
+            renderChatList();
         }
 
         async function clearCurrentChat() {
@@ -666,10 +755,10 @@ $theme_uri = get_template_directory_uri();
             if (!chat) return;
             chat.messages = msgs;
             chat.updatedAt = Date.now();
-            if (msgs.length > 0) {
+            if (msgs.length > 0 && (!chat.title || chat.title === 'Новый диалог')) {
                 const first = msgs.find(m => m.role === 'user');
                 if (first) chat.title = first.content.slice(0, 50) + (first.content.length > 50 ? '...' : '');
-            } else chat.title = 'Новый диалог';
+            } else if (msgs.length === 0) chat.title = 'Новый диалог';
             saveActiveChats(chats);
             renderChatList();
         }
@@ -689,14 +778,15 @@ $theme_uri = get_template_directory_uri();
             let html = '', lastGrp = '';
 
             chats.forEach(chat => {
-                let grp = chat.updatedAt >= today ? 'Сегодня' : chat.updatedAt >= yesterday ? 'Вчера' : chat.updatedAt >= weekAgo ? 'На этой неделе' : 'Раньше';
+                let grp = chat.pinned ? 'Закреплённые' : chat.updatedAt >= today ? 'Сегодня' : chat.updatedAt >= yesterday ? 'Вчера' : chat.updatedAt >= weekAgo ? 'На этой неделе' : 'Раньше';
                 if (grp !== lastGrp) { html += `<div class="sidebar-section px-3 pt-3 pb-1 text-[10px] font-semibold text-muted/80 uppercase tracking-wider">${grp}</div>`; lastGrp = grp; }
                 const active = chat.id === curChatId;
+                const menuOpen = chatMenuOpenId === chat.id;
                 const last = chat.messages.length > 0 ? chat.messages[chat.messages.length - 1].content.slice(0, 32) + (chat.messages[chat.messages.length - 1].content.length > 32 ? '...' : '') : 'Пустой диалог';
                 html += `
                     <div class="chat-item ${active ? 'active' : ''}" onclick="openChat('${chat.id}')" title="${esc(chat.title)}">
                         <div class="flex items-start gap-2.5">
-                            <i class="fas fa-message text-[10px] text-muted/80 mt-1 flex-shrink-0"></i>
+                            <i class="fas ${chat.pinned ? 'fa-thumbtack text-accent/80' : 'fa-message text-muted/80'} text-[10px] mt-1 flex-shrink-0"></i>
                             <div class="sidebar-label flex-1 min-w-0">
                                 <p class="text-[13px] font-medium truncate ${active ? 'text-accent' : ''}">${esc(chat.title)}</p>
                                 <div class="flex items-center gap-2 mt-0.5">
@@ -704,8 +794,15 @@ $theme_uri = get_template_directory_uri();
                                     <span class="text-[10px] text-muted/55 flex-shrink-0">${chat.messages.length}</span>
                                 </div>
                             </div>
-                            <button class="del-btn flex-shrink-0 mt-0.5" onclick="deleteChat('${chat.id}',event)" aria-label="Удалить"><i class="fas fa-xmark text-[11px]"></i></button>
+                            <button class="chat-menu-btn ${menuOpen ? 'open' : ''}" onclick="openChatMenu('${chat.id}',event)" aria-label="Действия с чатом" type="button"><i class="fas fa-ellipsis text-[12px]"></i></button>
                         </div>
+                        ${menuOpen ? `
+                            <div class="chat-context-menu" onclick="event.stopPropagation()">
+                                <button class="chat-context-item" onclick="renameChat('${chat.id}',event)" type="button"><i class="fas fa-pen"></i><span>Переименовать</span></button>
+                                <button class="chat-context-item" onclick="togglePinChat('${chat.id}',event)" type="button"><i class="fas fa-thumbtack"></i><span>${chat.pinned ? 'Открепить' : 'Закрепить'}</span></button>
+                                <button class="chat-context-item" onclick="shareChat('${chat.id}',event)" type="button"><i class="fas fa-share"></i><span>Поделиться</span></button>
+                                <button class="chat-context-item danger" onclick="deleteChat('${chat.id}',event)" type="button"><i class="fas fa-trash-can"></i><span>Удалить</span></button>
+                            </div>` : ''}
                     </div>`;
             });
             el.innerHTML = html;

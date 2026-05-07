@@ -28,7 +28,7 @@ final class GlossCheck_DeepSeek_Chat {
         add_action('admin_init', [__CLASS__, 'settings']);
         add_shortcode('deepseek_chat', [__CLASS__, 'shortcode']);
 
-        foreach (['send', 'list', 'create', 'clear', 'delete', 'current_user', 'register', 'login', 'logout'] as $action) {
+        foreach (['send', 'list', 'create', 'clear', 'delete', 'rename', 'pin', 'current_user', 'register', 'login', 'logout'] as $action) {
             add_action('wp_ajax_glosscheck_chat_' . $action, [__CLASS__, 'ajax_' . $action]);
             add_action('wp_ajax_nopriv_glosscheck_chat_' . $action, [__CLASS__, 'ajax_' . $action]);
         }
@@ -68,6 +68,7 @@ final class GlossCheck_DeepSeek_Chat {
             title VARCHAR(180) NOT NULL DEFAULT 'Новый диалог',
             prompt LONGTEXT NOT NULL,
             model VARCHAR(80) NOT NULL DEFAULT 'deepseek-chat',
+            is_pinned TINYINT(1) NOT NULL DEFAULT 0,
             is_deleted TINYINT(1) NOT NULL DEFAULT 0,
             deleted_at DATETIME NULL,
             created_at DATETIME NOT NULL,
@@ -603,7 +604,7 @@ final class GlossCheck_DeepSeek_Chat {
         $owner = self::owner_hash();
         global $wpdb;
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, public_id, title, is_deleted, created_at, updated_at FROM " . self::chats_table() . " WHERE owner_hash=%s AND is_deleted=0 ORDER BY updated_at DESC LIMIT 50",
+            "SELECT id, public_id, title, is_pinned, is_deleted, created_at, updated_at FROM " . self::chats_table() . " WHERE owner_hash=%s AND is_deleted=0 ORDER BY is_pinned DESC, updated_at DESC LIMIT 50",
             $owner
         ), ARRAY_A);
 
@@ -647,6 +648,55 @@ final class GlossCheck_DeepSeek_Chat {
             );
         }
         wp_send_json_success(['ok' => true]);
+    }
+
+    public static function ajax_rename(): void {
+        self::verify();
+        $chat = self::find_chat(self::chat_public_id(), self::owner_hash());
+        if (!$chat || !empty($chat['is_deleted'])) {
+            wp_send_json_error(['message' => 'Диалог не найден.'], 404);
+        }
+
+        $title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '';
+        $title = trim(mb_substr(wp_strip_all_tags($title), 0, 80));
+        if ($title === '') {
+            wp_send_json_error(['message' => 'Введите название диалога.'], 400);
+        }
+
+        global $wpdb;
+        $wpdb->update(
+            self::chats_table(),
+            ['title' => $title, 'updated_at' => current_time('mysql')],
+            ['id' => (int) $chat['id']],
+            ['%s', '%s'],
+            ['%d']
+        );
+
+        $chat = self::find_chat((string) $chat['public_id'], self::owner_hash());
+        $messages = self::messages_for((int) $chat['id'], self::max_messages());
+        wp_send_json_success(['chat' => self::format_chat($chat, $messages)]);
+    }
+
+    public static function ajax_pin(): void {
+        self::verify();
+        $chat = self::find_chat(self::chat_public_id(), self::owner_hash());
+        if (!$chat || !empty($chat['is_deleted'])) {
+            wp_send_json_error(['message' => 'Диалог не найден.'], 404);
+        }
+
+        $pinned = isset($_POST['pinned']) ? absint($_POST['pinned']) : 0;
+        global $wpdb;
+        $wpdb->update(
+            self::chats_table(),
+            ['is_pinned' => $pinned ? 1 : 0, 'updated_at' => current_time('mysql')],
+            ['id' => (int) $chat['id']],
+            ['%d', '%s'],
+            ['%d']
+        );
+
+        $chat = self::find_chat((string) $chat['public_id'], self::owner_hash());
+        $messages = self::messages_for((int) $chat['id'], self::max_messages());
+        wp_send_json_success(['chat' => self::format_chat($chat, $messages)]);
     }
 
     public static function ajax_current_user(): void {
@@ -836,10 +886,11 @@ final class GlossCheck_DeepSeek_Chat {
             'title' => 'Новый диалог',
             'prompt' => self::prompt(),
             'model' => self::model(),
+            'is_pinned' => 0,
             'is_deleted' => 0,
             'created_at' => $now,
             'updated_at' => $now,
-        ], ['%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s']);
+        ], ['%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s']);
         return self::find_chat($public_id, $owner_hash);
     }
 
@@ -889,6 +940,7 @@ final class GlossCheck_DeepSeek_Chat {
         return [
             'id' => $chat['public_id'],
             'title' => $chat['title'],
+            'pinned' => !empty($chat['is_pinned']),
             'createdAt' => strtotime($chat['created_at']) * 1000,
             'updatedAt' => strtotime($chat['updated_at']) * 1000,
             'deleted' => !empty($chat['is_deleted']),
