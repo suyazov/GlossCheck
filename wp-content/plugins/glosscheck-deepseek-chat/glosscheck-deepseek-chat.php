@@ -68,6 +68,8 @@ final class GlossCheck_DeepSeek_Chat {
             title VARCHAR(180) NOT NULL DEFAULT 'Новый диалог',
             prompt LONGTEXT NOT NULL,
             model VARCHAR(80) NOT NULL DEFAULT 'deepseek-chat',
+            is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+            deleted_at DATETIME NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             PRIMARY KEY (id),
@@ -112,6 +114,19 @@ final class GlossCheck_DeepSeek_Chat {
         $owner_key = isset($_GET['owner']) ? sanitize_text_field(wp_unslash($_GET['owner'])) : '';
         $selected_id = isset($_GET['chat_id']) ? absint($_GET['chat_id']) : 0;
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['gc_admin_delete_chat_id'])) {
+            check_admin_referer('glosscheck_admin_delete_chat');
+            $delete_id = absint($_POST['gc_admin_delete_chat_id']);
+            if ($delete_id > 0) {
+                $wpdb->delete(self::messages_table(), ['chat_id' => $delete_id], ['%d']);
+                $wpdb->delete(self::chats_table(), ['id' => $delete_id], ['%d']);
+                echo '<div class="notice notice-success is-dismissible"><p>Чат окончательно удалён.</p></div>';
+                if ($selected_id === $delete_id) {
+                    $selected_id = 0;
+                }
+            }
+        }
+
         $message_counts_sql = "SELECT chat_id, COUNT(*) AS messages_count FROM " . self::messages_table() . " GROUP BY chat_id";
         $owners = $wpdb->get_results(
             "SELECT c.user_id, c.owner_hash, MAX(c.owner_label) AS owner_label, MAX(c.updated_at) AS last_chat_at,
@@ -145,7 +160,7 @@ final class GlossCheck_DeepSeek_Chat {
                 : $wpdb->prepare('c.user_id = 0 AND c.owner_hash = %s', (string) $selected_owner['owner_hash']);
 
             $chats = $wpdb->get_results(
-                "SELECT c.id, c.public_id, c.owner_hash, c.user_id, c.owner_label, c.title, c.model, c.created_at, c.updated_at,
+                "SELECT c.id, c.public_id, c.owner_hash, c.user_id, c.owner_label, c.title, c.model, c.is_deleted, c.deleted_at, c.created_at, c.updated_at,
                         u.user_email, u.display_name, COALESCE(mc.messages_count, 0) AS messages_count
                  FROM " . self::chats_table() . " c
                  LEFT JOIN ({$message_counts_sql}) mc ON mc.chat_id = c.id
@@ -188,6 +203,7 @@ final class GlossCheck_DeepSeek_Chat {
                 .gc-admin-chat:hover,.gc-admin-chat.is-active,.gc-admin-owner:hover,.gc-admin-owner.is-active{background:#f6f7f7}
                 .gc-admin-chat strong,.gc-admin-owner strong{display:block;margin-bottom:4px;overflow-wrap:anywhere}
                 .gc-admin-owner-code{display:inline-block;margin-left:4px;padding:1px 6px;border-radius:999px;background:#eef2f7;color:#50575e;font-size:11px;font-weight:700;vertical-align:1px}
+                .gc-admin-deleted-badge{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:999px;background:#fcf0f1;color:#b32d2e;font-size:11px;font-weight:700;vertical-align:1px}
                 .gc-admin-meta{color:#646970;font-size:12px}
                 .gc-admin-messages{padding:16px;max-height:70vh;overflow:auto}
                 .gc-admin-summary{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;margin:14px 0}
@@ -247,7 +263,10 @@ final class GlossCheck_DeepSeek_Chat {
                             $active = (int) $chat['id'] === $selected_id ? ' is-active' : '';
                             ?>
                             <a class="gc-admin-chat<?php echo esc_attr($active); ?>" href="<?php echo esc_url($url); ?>">
-                                <strong><?php echo esc_html($chat['title']); ?></strong>
+                                <strong>
+                                    <?php echo esc_html($chat['title']); ?>
+                                    <?php if (!empty($chat['is_deleted'])) : ?><span class="gc-admin-deleted-badge">Удалён</span><?php endif; ?>
+                                </strong>
                                 <span class="gc-admin-meta">
                                     Обновлён: <?php echo esc_html(mysql2date('d.m.Y H:i', $chat['updated_at'])); ?>
                                     · <?php echo esc_html((string) (int) $chat['messages_count']); ?> сообщ.
@@ -263,7 +282,10 @@ final class GlossCheck_DeepSeek_Chat {
                             <h2>Выберите диалог</h2>
                             <p>После выбора пользователя и диалога здесь появится переписка.</p>
                         <?php else : ?>
-                            <h2><?php echo esc_html($selected_chat['title']); ?></h2>
+                            <h2>
+                                <?php echo esc_html($selected_chat['title']); ?>
+                                <?php if (!empty($selected_chat['is_deleted'])) : ?><span class="gc-admin-deleted-badge">Удалён пользователем</span><?php endif; ?>
+                            </h2>
                             <div class="gc-admin-summary">
                                 <div class="gc-admin-stat">
                                     <span class="gc-admin-meta">Владелец</span>
@@ -282,7 +304,13 @@ final class GlossCheck_DeepSeek_Chat {
                             <p class="gc-admin-meta">
                                 Создан: <?php echo esc_html(mysql2date('d.m.Y H:i', $selected_chat['created_at'])); ?>
                                 · Обновлён: <?php echo esc_html(mysql2date('d.m.Y H:i', $selected_chat['updated_at'])); ?>
+                                <?php if (!empty($selected_chat['deleted_at'])) : ?> · Удалён пользователем: <?php echo esc_html(mysql2date('d.m.Y H:i', $selected_chat['deleted_at'])); ?><?php endif; ?>
                             </p>
+                            <form method="post" onsubmit="return confirm('Окончательно удалить этот чат и все сообщения? Это действие нельзя отменить.');" style="margin:12px 0 18px">
+                                <?php wp_nonce_field('glosscheck_admin_delete_chat'); ?>
+                                <input type="hidden" name="gc_admin_delete_chat_id" value="<?php echo esc_attr((string) (int) $selected_chat['id']); ?>">
+                                <?php submit_button('Удалить чат окончательно', 'delete small', '', false); ?>
+                            </form>
                             <?php if (empty($messages)) : ?>
                                 <p>В этом диалоге пока нет сообщений.</p>
                             <?php else : ?>
@@ -575,7 +603,7 @@ final class GlossCheck_DeepSeek_Chat {
         $owner = self::owner_hash();
         global $wpdb;
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, public_id, title, created_at, updated_at FROM " . self::chats_table() . " WHERE owner_hash=%s ORDER BY updated_at DESC LIMIT 50",
+            "SELECT id, public_id, title, is_deleted, created_at, updated_at FROM " . self::chats_table() . " WHERE owner_hash=%s AND is_deleted=0 ORDER BY updated_at DESC LIMIT 50",
             $owner
         ), ARRAY_A);
 
@@ -609,8 +637,14 @@ final class GlossCheck_DeepSeek_Chat {
         $chat = self::find_chat(self::chat_public_id(), self::owner_hash());
         if ($chat) {
             global $wpdb;
-            $wpdb->delete(self::messages_table(), ['chat_id' => (int) $chat['id']], ['%d']);
-            $wpdb->delete(self::chats_table(), ['id' => (int) $chat['id']], ['%d']);
+            $now = current_time('mysql');
+            $wpdb->update(
+                self::chats_table(),
+                ['is_deleted' => 1, 'deleted_at' => $now, 'updated_at' => $now],
+                ['id' => (int) $chat['id']],
+                ['%d', '%s', '%s'],
+                ['%d']
+            );
         }
         wp_send_json_success(['ok' => true]);
     }
@@ -713,6 +747,9 @@ final class GlossCheck_DeepSeek_Chat {
 
         $owner = self::owner_hash();
         $chat = self::find_chat(self::chat_public_id(), $owner);
+        if ($chat && !empty($chat['is_deleted'])) {
+            $chat = null;
+        }
         if (!$chat) {
             $chat = self::create_chat($owner);
         }
@@ -799,9 +836,10 @@ final class GlossCheck_DeepSeek_Chat {
             'title' => 'Новый диалог',
             'prompt' => self::prompt(),
             'model' => self::model(),
+            'is_deleted' => 0,
             'created_at' => $now,
             'updated_at' => $now,
-        ], ['%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s']);
+        ], ['%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s']);
         return self::find_chat($public_id, $owner_hash);
     }
 
@@ -853,6 +891,7 @@ final class GlossCheck_DeepSeek_Chat {
             'title' => $chat['title'],
             'createdAt' => strtotime($chat['created_at']) * 1000,
             'updatedAt' => strtotime($chat['updated_at']) * 1000,
+            'deleted' => !empty($chat['is_deleted']),
             'messages' => $messages,
         ];
     }

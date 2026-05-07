@@ -157,10 +157,11 @@ $theme_uri = get_template_directory_uri();
             .app-shell { background: linear-gradient(90deg, rgba(4,12,10,.34), rgba(4,12,10,.10) 34%, rgba(4,12,10,.18)); }
             .sidebar-overlay { display: none!important; }
             .hamburger-btn { display: none!important; }
-            .sidebar-toggle { display: flex!important; width: 40px; height: 40px; min-width: 40px; margin-left: auto; border-radius: 14px; border: 1px solid rgba(224,244,229,.13); background: rgba(255,255,255,.035); align-items: center; justify-content: center; color: var(--muted); box-shadow: none; }
+            .sidebar-toggle { display: flex!important; width: 44px; height: 44px; min-width: 44px; border-radius: 16px; border: 1px solid rgba(224,244,229,.13); background: rgba(255,255,255,.035); align-items: center; justify-content: center; color: var(--muted); box-shadow: none; }
             .sidebar-toggle:hover { color: var(--accent); border-color: rgba(65,240,165,.28); background: rgba(65,240,165,.08); }
             .sidebar-toggle i { font-size: 13px; transition: transform .22s ease; }
-            .sidebar-head .brand-wordmark { font-size: 30px!important; flex: 1; min-width: 0; }
+            .sidebar-head .brand-wordmark { font-size: 31px!important; flex: 1; min-width: 0; }
+            .sidebar-actions { display: grid; grid-template-columns: 1fr 44px; gap: 10px; align-items: stretch; }
             #app.sidebar-collapsed .sidebar { width: 88px; min-width: 88px; }
             #app.sidebar-collapsed .sidebar .sidebar-label,
             #app.sidebar-collapsed .sidebar .sidebar-meta,
@@ -168,6 +169,7 @@ $theme_uri = get_template_directory_uri();
             #app.sidebar-collapsed .sidebar .del-btn { display: none!important; }
             #app.sidebar-collapsed .sidebar .sidebar-top { padding: 16px 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
             #app.sidebar-collapsed .sidebar .sidebar-head { flex-direction: column; justify-content: flex-start; align-items: center; gap: 10px; margin-bottom: 0; }
+            #app.sidebar-collapsed .sidebar .sidebar-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; }
             #app.sidebar-collapsed .sidebar .sidebar-brand-icon,
             #app.sidebar-collapsed .sidebar .new-chat-btn,
             #app.sidebar-collapsed .sidebar .chat-item,
@@ -340,13 +342,15 @@ $theme_uri = get_template_directory_uri();
                             <i class="fas fa-bolt text-accent text-base"></i>
                         </div>
                         <span class="sidebar-label brand-wordmark text-[34px] leading-none">GlossCheck</span>
+                    </div>
+                    <div class="sidebar-actions">
+                        <button class="new-chat-btn w-full flex items-center justify-center gap-2.5 px-3.5 py-3 rounded-2xl bg-accent/[0.10] border border-accent/20 text-accent text-[14px] font-semibold transition-all hover:bg-accent/[0.15] cursor-pointer" onclick="createNewChat()" title="Новый диалог">
+                            <i class="fas fa-plus text-xs"></i><span class="sidebar-label">Новый диалог</span>
+                        </button>
                         <button class="sidebar-toggle hidden transition-all cursor-pointer" onclick="toggleSidebarCollapse()" title="Свернуть сайдбар" aria-label="Свернуть сайдбар" type="button">
                             <i class="fas fa-angles-left"></i>
                         </button>
                     </div>
-                    <button class="new-chat-btn w-full flex items-center justify-center gap-2.5 px-3.5 py-3 rounded-2xl bg-accent/[0.10] border border-accent/20 text-accent text-[14px] font-semibold transition-all hover:bg-accent/[0.15] cursor-pointer" onclick="createNewChat()" title="Новый диалог">
-                        <i class="fas fa-plus text-xs"></i><span class="sidebar-label">Новый диалог</span>
-                    </button>
                 </div>
 
                 <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-1.5" id="chatList"></div>
