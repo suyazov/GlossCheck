@@ -152,7 +152,10 @@ $theme_uri = get_template_directory_uri();
             .sidebar { position: relative; transform: none; z-index: 10; width: 320px; min-width: 320px; transition: width .28s ease, min-width .28s ease, transform .35s cubic-bezier(0.16,1,0.3,1); }
             .sidebar-overlay { display: none!important; }
             .hamburger-btn { display: none!important; }
-            .sidebar-toggle { display: flex!important; }
+            .sidebar-toggle { display: flex!important; width: 40px; height: 40px; min-width: 40px; margin-left: auto; border-radius: 14px; border: 1px solid rgba(224,244,229,.13); background: rgba(255,255,255,.035); align-items: center; justify-content: center; color: var(--muted); box-shadow: none; }
+            .sidebar-toggle:hover { color: var(--accent); border-color: rgba(65,240,165,.28); background: rgba(65,240,165,.08); }
+            .sidebar-toggle i { font-size: 13px; transition: transform .22s ease; }
+            .sidebar-head .brand-wordmark { font-size: 30px!important; flex: 1; min-width: 0; }
             #app.sidebar-collapsed .sidebar { width: 88px; min-width: 88px; }
             #app.sidebar-collapsed .sidebar .sidebar-label,
             #app.sidebar-collapsed .sidebar .sidebar-meta,
@@ -323,8 +326,8 @@ $theme_uri = get_template_directory_uri();
                             <i class="fas fa-bolt text-accent text-base"></i>
                         </div>
                         <span class="sidebar-label brand-wordmark text-[34px] leading-none">GlossCheck</span>
-                        <button class="sidebar-toggle hidden ml-auto w-9 h-9 rounded-xl border border-border bg-card/60 items-center justify-center text-muted hover:text-accent hover:border-accent/30 transition-all cursor-pointer" onclick="toggleSidebarCollapse()" title="Свернуть сайдбар" aria-label="Свернуть сайдбар" type="button">
-                            <i class="fas fa-chevron-left text-xs transition-transform"></i>
+                        <button class="sidebar-toggle hidden transition-all cursor-pointer" onclick="toggleSidebarCollapse()" title="Свернуть сайдбар" aria-label="Свернуть сайдбар" type="button">
+                            <i class="fas fa-angles-left"></i>
                         </button>
                     </div>
                     <button class="new-chat-btn w-full flex items-center justify-center gap-2.5 px-3.5 py-3 rounded-2xl bg-accent/[0.10] border border-accent/20 text-accent text-[14px] font-semibold transition-all hover:bg-accent/[0.15] cursor-pointer" onclick="createNewChat()" title="Новый диалог">
