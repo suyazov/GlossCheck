@@ -109,17 +109,53 @@ final class GlossCheck_DeepSeek_Chat {
         }
 
         global $wpdb;
+        $owner_key = isset($_GET['owner']) ? sanitize_text_field(wp_unslash($_GET['owner'])) : '';
         $selected_id = isset($_GET['chat_id']) ? absint($_GET['chat_id']) : 0;
-        $chats = $wpdb->get_results(
-            "SELECT c.id, c.public_id, c.owner_hash, c.user_id, c.owner_label, c.title, c.model, c.created_at, c.updated_at, u.user_email, u.display_name, COUNT(m.id) AS messages_count
+
+        $message_counts_sql = "SELECT chat_id, COUNT(*) AS messages_count FROM " . self::messages_table() . " GROUP BY chat_id";
+        $owners = $wpdb->get_results(
+            "SELECT c.user_id, c.owner_hash, MAX(c.owner_label) AS owner_label, MAX(c.updated_at) AS last_chat_at,
+                    COUNT(c.id) AS chats_count, COALESCE(SUM(mc.messages_count), 0) AS messages_count,
+                    MAX(u.user_email) AS user_email, MAX(u.display_name) AS display_name
              FROM " . self::chats_table() . " c
-             LEFT JOIN " . self::messages_table() . " m ON m.chat_id = c.id
+             LEFT JOIN ({$message_counts_sql}) mc ON mc.chat_id = c.id
              LEFT JOIN {$wpdb->users} u ON u.ID = c.user_id
-             GROUP BY c.id
-             ORDER BY c.updated_at DESC
+             GROUP BY c.user_id, c.owner_hash
+             ORDER BY last_chat_at DESC
              LIMIT 200",
             ARRAY_A
         );
+
+        if ($owner_key === '' && !empty($owners)) {
+            $owner_key = self::owner_row_key($owners[0]);
+        }
+
+        $selected_owner = null;
+        foreach ($owners as $owner) {
+            if (self::owner_row_key($owner) === $owner_key) {
+                $selected_owner = $owner;
+                break;
+            }
+        }
+
+        $chats = [];
+        if ($selected_owner) {
+            $where = (int) $selected_owner['user_id'] > 0
+                ? $wpdb->prepare('c.user_id = %d', (int) $selected_owner['user_id'])
+                : $wpdb->prepare('c.user_id = 0 AND c.owner_hash = %s', (string) $selected_owner['owner_hash']);
+
+            $chats = $wpdb->get_results(
+                "SELECT c.id, c.public_id, c.owner_hash, c.user_id, c.owner_label, c.title, c.model, c.created_at, c.updated_at,
+                        u.user_email, u.display_name, COALESCE(mc.messages_count, 0) AS messages_count
+                 FROM " . self::chats_table() . " c
+                 LEFT JOIN ({$message_counts_sql}) mc ON mc.chat_id = c.id
+                 LEFT JOIN {$wpdb->users} u ON u.ID = c.user_id
+                 WHERE {$where}
+                 ORDER BY c.updated_at DESC
+                 LIMIT 200",
+                ARRAY_A
+            );
+        }
 
         if (!$selected_id && !empty($chats)) {
             $selected_id = (int) $chats[0]['id'];
@@ -143,37 +179,66 @@ final class GlossCheck_DeepSeek_Chat {
         ?>
         <div class="wrap">
             <h1>История чатов</h1>
-            <p>Здесь отображаются все диалоги, сохранённые плагином GlossCheck DeepSeek Chat.</p>
+            <p>Выберите пользователя или гостевую сессию, затем конкретный диалог. Так история не смешивается между разными посетителями.</p>
             <style>
-                .gc-admin-history{display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:18px;margin-top:18px}
+                .gc-admin-history{display:grid;grid-template-columns:minmax(260px,320px) minmax(300px,380px) 1fr;gap:18px;margin-top:18px}
                 .gc-admin-panel{background:#fff;border:1px solid #dcdcde;border-radius:8px;overflow:hidden}
-                .gc-admin-chat{display:block;padding:12px 14px;border-bottom:1px solid #f0f0f1;text-decoration:none;color:#1d2327}
-                .gc-admin-chat:hover,.gc-admin-chat.is-active{background:#f6f7f7}
-                .gc-admin-chat strong{display:block;margin-bottom:4px}
+                .gc-admin-panel-head{padding:12px 14px;border-bottom:1px solid #dcdcde;background:#f6f7f7;font-weight:700}
+                .gc-admin-chat,.gc-admin-owner{display:block;padding:12px 14px;border-bottom:1px solid #f0f0f1;text-decoration:none;color:#1d2327}
+                .gc-admin-chat:hover,.gc-admin-chat.is-active,.gc-admin-owner:hover,.gc-admin-owner.is-active{background:#f6f7f7}
+                .gc-admin-chat strong,.gc-admin-owner strong{display:block;margin-bottom:4px}
                 .gc-admin-meta{color:#646970;font-size:12px}
                 .gc-admin-messages{padding:16px;max-height:70vh;overflow:auto}
+                .gc-admin-summary{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;margin:14px 0}
+                .gc-admin-stat{padding:10px 12px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:8px}
+                .gc-admin-stat strong{display:block;font-size:18px}
                 .gc-admin-message{margin:0 0 14px;padding:12px 14px;border-radius:8px;border:1px solid #dcdcde;background:#f6f7f7}
                 .gc-admin-message.user{background:#e7f7ef;border-color:#b7e4cd}
                 .gc-admin-message.assistant{background:#f7f7fb}
                 .gc-admin-role{font-weight:700;margin-bottom:6px}
                 .gc-admin-content{white-space:pre-wrap;line-height:1.55}
-                @media(max-width:960px){.gc-admin-history{grid-template-columns:1fr}.gc-admin-messages{max-height:none}}
+                @media(max-width:1200px){.gc-admin-history{grid-template-columns:1fr}.gc-admin-messages{max-height:none}.gc-admin-summary{grid-template-columns:1fr}}
             </style>
             <div class="gc-admin-history">
                 <div class="gc-admin-panel">
-                    <?php if (empty($chats)) : ?>
-                        <div class="gc-admin-chat"><strong>Диалогов пока нет</strong><span class="gc-admin-meta">Они появятся после первых сообщений на сайте.</span></div>
+                    <div class="gc-admin-panel-head">Пользователи и гости</div>
+                    <?php if (empty($owners)) : ?>
+                        <div class="gc-admin-owner"><strong>Истории пока нет</strong><span class="gc-admin-meta">Пользователи появятся после первых диалогов.</span></div>
+                    <?php else : ?>
+                        <?php foreach ($owners as $owner) : ?>
+                            <?php
+                            $key = self::owner_row_key($owner);
+                            $url = admin_url('admin.php?page=glosscheck-chat-history&owner=' . rawurlencode($key));
+                            $active = $key === $owner_key ? ' is-active' : '';
+                            ?>
+                            <a class="gc-admin-owner<?php echo esc_attr($active); ?>" href="<?php echo esc_url($url); ?>">
+                                <strong><?php echo esc_html(self::chat_owner_label($owner)); ?></strong>
+                                <span class="gc-admin-meta">
+                                    Диалогов: <?php echo esc_html((string) (int) $owner['chats_count']); ?>
+                                    · сообщений: <?php echo esc_html((string) (int) $owner['messages_count']); ?><br>
+                                    Последний: <?php echo esc_html(mysql2date('d.m.Y H:i', $owner['last_chat_at'])); ?>
+                                </span>
+                            </a>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
+                <div class="gc-admin-panel">
+                    <div class="gc-admin-panel-head">Диалоги выбранного владельца</div>
+                    <?php if (!$selected_owner) : ?>
+                        <div class="gc-admin-chat"><strong>Выберите владельца</strong><span class="gc-admin-meta">Слева выберите пользователя или гостя.</span></div>
+                    <?php elseif (empty($chats)) : ?>
+                        <div class="gc-admin-chat"><strong>Диалогов нет</strong><span class="gc-admin-meta">У выбранного владельца пока нет диалогов.</span></div>
                     <?php else : ?>
                         <?php foreach ($chats as $chat) : ?>
                             <?php
-                            $url = admin_url('admin.php?page=glosscheck-chat-history&chat_id=' . (int) $chat['id']);
+                            $url = admin_url('admin.php?page=glosscheck-chat-history&owner=' . rawurlencode($owner_key) . '&chat_id=' . (int) $chat['id']);
                             $active = (int) $chat['id'] === $selected_id ? ' is-active' : '';
                             ?>
                             <a class="gc-admin-chat<?php echo esc_attr($active); ?>" href="<?php echo esc_url($url); ?>">
                                 <strong><?php echo esc_html($chat['title']); ?></strong>
                                 <span class="gc-admin-meta">
-                                    <?php echo esc_html(mysql2date('d.m.Y H:i', $chat['updated_at'])); ?>
-                                    · <?php echo esc_html(self::chat_owner_label($chat)); ?>
+                                    Обновлён: <?php echo esc_html(mysql2date('d.m.Y H:i', $chat['updated_at'])); ?>
                                     · <?php echo esc_html((string) (int) $chat['messages_count']); ?> сообщ.
                                 </span>
                             </a>
@@ -185,14 +250,17 @@ final class GlossCheck_DeepSeek_Chat {
                     <div class="gc-admin-messages">
                         <?php if (!$selected_chat) : ?>
                             <h2>Выберите диалог</h2>
-                            <p>После выбора здесь появится переписка.</p>
+                            <p>После выбора пользователя и диалога здесь появится переписка.</p>
                         <?php else : ?>
                             <h2><?php echo esc_html($selected_chat['title']); ?></h2>
+                            <div class="gc-admin-summary">
+                                <div class="gc-admin-stat"><span class="gc-admin-meta">Владелец</span><strong><?php echo esc_html(self::chat_owner_label($selected_chat)); ?></strong></div>
+                                <div class="gc-admin-stat"><span class="gc-admin-meta">Сообщений</span><strong><?php echo esc_html((string) count($messages)); ?></strong></div>
+                                <div class="gc-admin-stat"><span class="gc-admin-meta">Модель</span><strong><?php echo esc_html($selected_chat['model']); ?></strong></div>
+                            </div>
                             <p class="gc-admin-meta">
                                 Создан: <?php echo esc_html(mysql2date('d.m.Y H:i', $selected_chat['created_at'])); ?>
                                 · Обновлён: <?php echo esc_html(mysql2date('d.m.Y H:i', $selected_chat['updated_at'])); ?>
-                                · Пользователь: <?php echo esc_html(self::chat_owner_label($selected_chat)); ?>
-                                · Модель: <?php echo esc_html($selected_chat['model']); ?>
                             </p>
                             <?php if (empty($messages)) : ?>
                                 <p>В этом диалоге пока нет сообщений.</p>
@@ -783,6 +851,14 @@ final class GlossCheck_DeepSeek_Chat {
         }
 
         return !empty($chat['user_id']) ? 'Пользователь #' . (int) $chat['user_id'] : 'Гость';
+    }
+
+    private static function owner_row_key(array $row): string {
+        if ((int) ($row['user_id'] ?? 0) > 0) {
+            return 'user:' . (int) $row['user_id'];
+        }
+
+        return 'guest:' . (string) ($row['owner_hash'] ?? '');
     }
 
     private static function chats_table(): string {
