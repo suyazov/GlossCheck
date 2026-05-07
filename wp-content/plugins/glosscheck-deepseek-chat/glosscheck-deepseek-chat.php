@@ -314,11 +314,19 @@ final class GlossCheck_DeepSeek_Chat {
             check_admin_referer('glosscheck_chat_user_limits');
             $user_id = absint($_POST['gc_chat_user_id']);
             if ($user_id > 0 && get_user_by('id', $user_id)) {
-                update_user_meta($user_id, self::META_BLOCKED, isset($_POST['gc_chat_blocked']) ? '1' : '0');
-                update_user_meta($user_id, self::META_RATE_LIMIT, max(0, min(60, absint($_POST['gc_chat_rate_limit'] ?? 0))));
-                update_user_meta($user_id, self::META_MAX_MESSAGES, max(0, min(40, absint($_POST['gc_chat_max_messages'] ?? 0))));
-                update_user_meta($user_id, self::META_MAX_TOKENS, max(0, min(4000, absint($_POST['gc_chat_max_tokens'] ?? 0))));
-                echo '<div class="notice notice-success is-dismissible"><p>Настройки пользователя сохранены.</p></div>';
+                $action = isset($_POST['gc_chat_action']) ? sanitize_text_field(wp_unslash($_POST['gc_chat_action'])) : 'limits';
+                if ($action === 'block') {
+                    update_user_meta($user_id, self::META_BLOCKED, '1');
+                    echo '<div class="notice notice-success is-dismissible"><p>Пользователь заблокирован для чата.</p></div>';
+                } elseif ($action === 'unblock') {
+                    update_user_meta($user_id, self::META_BLOCKED, '0');
+                    echo '<div class="notice notice-success is-dismissible"><p>Пользователь разблокирован для чата.</p></div>';
+                } else {
+                    update_user_meta($user_id, self::META_RATE_LIMIT, max(0, min(60, absint($_POST['gc_chat_rate_limit'] ?? 0))));
+                    update_user_meta($user_id, self::META_MAX_MESSAGES, max(0, min(40, absint($_POST['gc_chat_max_messages'] ?? 0))));
+                    update_user_meta($user_id, self::META_MAX_TOKENS, max(0, min(4000, absint($_POST['gc_chat_max_tokens'] ?? 0))));
+                    echo '<div class="notice notice-success is-dismissible"><p>Лимиты пользователя сохранены.</p></div>';
+                }
             }
         }
 
@@ -340,6 +348,17 @@ final class GlossCheck_DeepSeek_Chat {
         <div class="wrap">
             <h1>Пользователи чата</h1>
             <p>Здесь можно ограничить или заблокировать пользователей, чтобы контролировать расход API.</p>
+            <style>
+                .gc-user-status{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;font-weight:700;font-size:12px}
+                .gc-user-status.active{background:#e7f7ef;color:#008a20}
+                .gc-user-status.blocked{background:#fcf0f1;color:#b32d2e}
+                .gc-user-actions{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+                .gc-limits-grid{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:10px;margin-bottom:10px;max-width:560px}
+                .gc-limit-field label{display:block;font-weight:600;margin-bottom:4px}
+                .gc-limit-field input{width:100%;max-width:110px}
+                .gc-limit-field .description{display:block;margin-top:3px}
+                @media(max-width:1100px){.gc-limits-grid{grid-template-columns:1fr}}
+            </style>
             <table class="widefat striped" style="margin-top:16px">
                 <thead>
                     <tr>
@@ -374,19 +393,46 @@ final class GlossCheck_DeepSeek_Chat {
                                 </td>
                                 <td>
                                     <?php if ($blocked) : ?>
-                                        <span style="color:#b32d2e;font-weight:700">Заблокирован</span>
+                                        <span class="gc-user-status blocked">Заблокирован</span>
                                     <?php else : ?>
-                                        <span style="color:#008a20;font-weight:700">Активен</span>
+                                        <span class="gc-user-status active">Активен</span>
                                     <?php endif; ?>
+                                    <div class="gc-user-actions" style="margin-top:10px">
+                                        <form method="post">
+                                            <?php wp_nonce_field('glosscheck_chat_user_limits'); ?>
+                                            <input type="hidden" name="gc_chat_user_id" value="<?php echo esc_attr((string) $user_id); ?>">
+                                            <?php if ($blocked) : ?>
+                                                <input type="hidden" name="gc_chat_action" value="unblock">
+                                                <?php submit_button('Разблокировать', 'primary small', '', false); ?>
+                                            <?php else : ?>
+                                                <input type="hidden" name="gc_chat_action" value="block">
+                                                <?php submit_button('Заблокировать', 'delete small', '', false); ?>
+                                            <?php endif; ?>
+                                        </form>
+                                    </div>
                                 </td>
                                 <td>
                                     <form method="post">
                                         <?php wp_nonce_field('glosscheck_chat_user_limits'); ?>
                                         <input type="hidden" name="gc_chat_user_id" value="<?php echo esc_attr((string) $user_id); ?>">
-                                        <label><input type="checkbox" name="gc_chat_blocked" value="1" <?php checked($blocked); ?>> Заблокировать чат</label><br>
-                                        <label>Сообщений/мин: <input type="number" name="gc_chat_rate_limit" min="0" max="60" value="<?php echo esc_attr((string) $rate); ?>" style="width:72px"> <span class="description">0 = общий</span></label><br>
-                                        <label>Лимит истории: <input type="number" name="gc_chat_max_messages" min="0" max="40" value="<?php echo esc_attr((string) $messages); ?>" style="width:72px"> <span class="description">0 = общий</span></label><br>
-                                        <label>Токены ответа: <input type="number" name="gc_chat_max_tokens" min="0" max="4000" value="<?php echo esc_attr((string) $tokens); ?>" style="width:72px"> <span class="description">0 = общий</span></label><br>
+                                        <input type="hidden" name="gc_chat_action" value="limits">
+                                        <div class="gc-limits-grid">
+                                            <div class="gc-limit-field">
+                                                <label>Сообщений/мин</label>
+                                                <input type="number" name="gc_chat_rate_limit" min="0" max="60" value="<?php echo esc_attr((string) $rate); ?>">
+                                                <span class="description">0 = общий</span>
+                                            </div>
+                                            <div class="gc-limit-field">
+                                                <label>Лимит истории</label>
+                                                <input type="number" name="gc_chat_max_messages" min="0" max="40" value="<?php echo esc_attr((string) $messages); ?>">
+                                                <span class="description">0 = общий</span>
+                                            </div>
+                                            <div class="gc-limit-field">
+                                                <label>Токены ответа</label>
+                                                <input type="number" name="gc_chat_max_tokens" min="0" max="4000" value="<?php echo esc_attr((string) $tokens); ?>">
+                                                <span class="description">0 = общий</span>
+                                            </div>
+                                        </div>
                                         <?php submit_button('Сохранить', 'secondary small', '', false); ?>
                                     </form>
                                 </td>
