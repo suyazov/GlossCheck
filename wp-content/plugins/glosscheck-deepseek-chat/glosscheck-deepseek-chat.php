@@ -186,12 +186,15 @@ final class GlossCheck_DeepSeek_Chat {
                 .gc-admin-panel-head{padding:12px 14px;border-bottom:1px solid #dcdcde;background:#f6f7f7;font-weight:700}
                 .gc-admin-chat,.gc-admin-owner{display:block;padding:12px 14px;border-bottom:1px solid #f0f0f1;text-decoration:none;color:#1d2327}
                 .gc-admin-chat:hover,.gc-admin-chat.is-active,.gc-admin-owner:hover,.gc-admin-owner.is-active{background:#f6f7f7}
-                .gc-admin-chat strong,.gc-admin-owner strong{display:block;margin-bottom:4px}
+                .gc-admin-chat strong,.gc-admin-owner strong{display:block;margin-bottom:4px;overflow-wrap:anywhere}
+                .gc-admin-owner-code{display:inline-block;margin-left:4px;padding:1px 6px;border-radius:999px;background:#eef2f7;color:#50575e;font-size:11px;font-weight:700;vertical-align:1px}
                 .gc-admin-meta{color:#646970;font-size:12px}
                 .gc-admin-messages{padding:16px;max-height:70vh;overflow:auto}
                 .gc-admin-summary{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;margin:14px 0}
-                .gc-admin-stat{padding:10px 12px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:8px}
-                .gc-admin-stat strong{display:block;font-size:18px}
+                .gc-admin-stat{min-width:0;padding:10px 12px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:8px}
+                .gc-admin-stat strong{display:block;font-size:18px;line-height:1.2;overflow-wrap:anywhere;word-break:break-word}
+                .gc-admin-owner-name{display:block}
+                .gc-admin-owner-email{display:block;font-size:13px;line-height:1.25;color:#646970;font-weight:600;margin-top:3px}
                 .gc-admin-message{margin:0 0 14px;padding:12px 14px;border-radius:8px;border:1px solid #dcdcde;background:#f6f7f7}
                 .gc-admin-message.user{background:#e7f7ef;border-color:#b7e4cd}
                 .gc-admin-message.assistant{background:#f7f7fb}
@@ -212,7 +215,15 @@ final class GlossCheck_DeepSeek_Chat {
                             $active = $key === $owner_key ? ' is-active' : '';
                             ?>
                             <a class="gc-admin-owner<?php echo esc_attr($active); ?>" href="<?php echo esc_url($url); ?>">
-                                <strong><?php echo esc_html(self::chat_owner_label($owner)); ?></strong>
+                                <strong>
+                                    <?php echo esc_html(self::chat_owner_title($owner)); ?>
+                                    <?php if ((int) ($owner['user_id'] ?? 0) === 0) : ?>
+                                        <span class="gc-admin-owner-code"><?php echo esc_html(self::guest_code($owner)); ?></span>
+                                    <?php endif; ?>
+                                </strong>
+                                <?php if (!empty($owner['user_email'])) : ?>
+                                    <span class="gc-admin-owner-email"><?php echo esc_html($owner['user_email']); ?></span>
+                                <?php endif; ?>
                                 <span class="gc-admin-meta">
                                     Диалогов: <?php echo esc_html((string) (int) $owner['chats_count']); ?>
                                     · сообщений: <?php echo esc_html((string) (int) $owner['messages_count']); ?><br>
@@ -254,7 +265,17 @@ final class GlossCheck_DeepSeek_Chat {
                         <?php else : ?>
                             <h2><?php echo esc_html($selected_chat['title']); ?></h2>
                             <div class="gc-admin-summary">
-                                <div class="gc-admin-stat"><span class="gc-admin-meta">Владелец</span><strong><?php echo esc_html(self::chat_owner_label($selected_chat)); ?></strong></div>
+                                <div class="gc-admin-stat">
+                                    <span class="gc-admin-meta">Владелец</span>
+                                    <strong>
+                                        <span class="gc-admin-owner-name"><?php echo esc_html(self::chat_owner_title($selected_chat)); ?></span>
+                                        <?php if (!empty($selected_chat['user_email'])) : ?>
+                                            <span class="gc-admin-owner-email"><?php echo esc_html($selected_chat['user_email']); ?></span>
+                                        <?php else : ?>
+                                            <span class="gc-admin-owner-email"><?php echo esc_html(self::guest_code($selected_chat)); ?></span>
+                                        <?php endif; ?>
+                                    </strong>
+                                </div>
                                 <div class="gc-admin-stat"><span class="gc-admin-meta">Сообщений</span><strong><?php echo esc_html((string) count($messages)); ?></strong></div>
                                 <div class="gc-admin-stat"><span class="gc-admin-meta">Модель</span><strong><?php echo esc_html($selected_chat['model']); ?></strong></div>
                             </div>
@@ -851,6 +872,23 @@ final class GlossCheck_DeepSeek_Chat {
         }
 
         return !empty($chat['user_id']) ? 'Пользователь #' . (int) $chat['user_id'] : 'Гость';
+    }
+
+    private static function chat_owner_title(array $chat): string {
+        if (!empty($chat['user_email'])) {
+            return $chat['display_name'] ?: 'Пользователь #' . (int) ($chat['user_id'] ?? 0);
+        }
+
+        return 'Гость';
+    }
+
+    private static function guest_code(array $chat): string {
+        $hash = (string) ($chat['owner_hash'] ?? '');
+        if ($hash === '') {
+            return '#000000';
+        }
+
+        return '#' . strtoupper(substr($hash, 0, 6));
     }
 
     private static function owner_row_key(array $row): string {
