@@ -38,18 +38,20 @@ $theme_uri = get_template_directory_uri();
             font-style: normal;
         }
         :root {
-            --bg: #07100d; --surface: rgba(8, 18, 15, 0.82); --card: rgba(14, 25, 22, 0.84); --border: rgba(224, 244, 229, 0.16);
+            --bg: #07100d; --surface: rgba(8, 18, 15, 0.68); --card: rgba(10, 18, 17, 0.66); --border: rgba(224, 244, 229, 0.12);
             --text: #f5f8ef; --muted: #a9b4a8; --accent: #41f0a5; --accent-dim: #23c783;
             --panel-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        button { outline: none; }
+        button:focus-visible { outline: 2px solid rgba(65,240,165,.44); outline-offset: 3px; }
         html { margin-top: 0!important; }
         body.admin-bar { --wp-admin-bar-offset: 32px; }
         body.admin-bar #wpadminbar { position: fixed; }
         body {
             font-family: 'Manrope', sans-serif;
             background-color: var(--bg);
-            background-image: linear-gradient(120deg, rgba(5, 12, 10, 0.2), rgba(5, 12, 10, 0.5)), url('<?php echo esc_url($theme_uri); ?>/assets/images/bg_desktop.jpg');
+            background-image: linear-gradient(120deg, rgba(5, 12, 10, 0.34), rgba(5, 12, 10, 0.46)), url('<?php echo esc_url($theme_uri); ?>/assets/images/bg_desktop.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -71,7 +73,7 @@ $theme_uri = get_template_directory_uri();
         }
 
         body::after {
-            content:''; position:fixed; inset:0; opacity:0.055; pointer-events:none; z-index:0;
+            content:''; position:fixed; inset:0; opacity:0.045; pointer-events:none; z-index:0;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
@@ -141,15 +143,18 @@ $theme_uri = get_template_directory_uri();
 
         .sidebar {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px; max-width: 85vw;
-            background: linear-gradient(180deg, rgba(8,18,15,.94), rgba(7,14,12,.9)); border-right: 1px solid var(--border); backdrop-filter: blur(24px);
+            background: linear-gradient(180deg, rgba(6,16,13,.72), rgba(5,13,11,.66)); border-right: 1px solid rgba(224,244,229,.10); backdrop-filter: blur(24px);
             z-index: 50; transform: translateX(-100%); transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
             display: flex; flex-direction: column;
-            box-shadow: 20px 0 70px rgba(0,0,0,.25);
+            box-shadow: inset -1px 0 0 rgba(255,255,255,.025);
         }
         .sidebar.open { transform: translateX(0); }
+        .sidebar-top { border-color: rgba(224,244,229,.08)!important; }
+        #sidebarFooter { border-color: rgba(224,244,229,.08)!important; }
 
         @media (min-width: 768px) {
             .sidebar { position: relative; transform: none; z-index: 10; width: 320px; min-width: 320px; transition: width .28s ease, min-width .28s ease, transform .35s cubic-bezier(0.16,1,0.3,1); }
+            .app-shell { background: linear-gradient(90deg, rgba(4,12,10,.34), rgba(4,12,10,.10) 34%, rgba(4,12,10,.18)); }
             .sidebar-overlay { display: none!important; }
             .hamburger-btn { display: none!important; }
             .sidebar-toggle { display: flex!important; width: 40px; height: 40px; min-width: 40px; margin-left: auto; border-radius: 14px; border: 1px solid rgba(224,244,229,.13); background: rgba(255,255,255,.035); align-items: center; justify-content: center; color: var(--muted); box-shadow: none; }
@@ -195,7 +200,7 @@ $theme_uri = get_template_directory_uri();
             transition: background 0.2s, border-color 0.2s; border: 1px solid transparent;
         }
         .chat-item:hover { background: rgba(255,255,255,0.035); }
-        .chat-item.active { background: rgba(65,240,165,0.09); border-color: rgba(65,240,165,0.18); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+        .chat-item.active { background: rgba(65,240,165,0.075); border-color: rgba(65,240,165,0.17); box-shadow: inset 0 1px 0 rgba(255,255,255,.035); }
         .chat-item .del-btn { opacity: 0; transition: opacity 0.2s, color 0.2s; color: var(--muted); cursor: pointer; padding: 2px 5px; border-radius: 4px; }
         .chat-item:hover .del-btn { opacity: 1; }
         .chat-item .del-btn:hover { color: #f87171; }
@@ -239,17 +244,26 @@ $theme_uri = get_template_directory_uri();
         .guest-banner.hidden { opacity: 0; max-height: 0!important; padding-top: 0!important; padding-bottom: 0!important; border-color: transparent; }
         .app-header {
             min-height: 72px;
-            background: linear-gradient(180deg, rgba(9,18,15,.72), rgba(9,18,15,.54));
-            box-shadow: 0 1px 0 rgba(255,255,255,.04);
+            background: linear-gradient(180deg, rgba(7,17,14,.50), rgba(7,17,14,.36));
+            box-shadow: 0 1px 0 rgba(255,255,255,.025);
+            border-color: rgba(224,244,229,.08)!important;
         }
         .chat-stage {
-            background: radial-gradient(circle at 50% 20%, rgba(65,240,165,.08), transparent 34%);
+            background:
+                radial-gradient(circle at 50% 20%, rgba(65,240,165,.055), transparent 34%),
+                linear-gradient(180deg, rgba(7,16,13,.08), rgba(7,16,13,.14));
         }
         .welcome-mark {
             box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 20px 60px rgba(0,0,0,.24);
         }
         .composer-shell {
-            background: linear-gradient(180deg, rgba(7,16,13,.72), rgba(7,16,13,.9));
+            background: linear-gradient(180deg, rgba(7,16,13,.34), rgba(7,16,13,.50));
+            border-color: rgba(224,244,229,.08)!important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+        }
+        .composer-shell .input-wrap {
+            background: rgba(10, 14, 18, .78)!important;
+            border-color: rgba(224,244,229,.10)!important;
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -314,7 +328,7 @@ $theme_uri = get_template_directory_uri();
 
     <!-- ==================== ОСНОВНОЙ ИНТЕРФЕЙС ==================== -->
     <div id="app" class="h-full" style="display:none;">
-        <div class="flex h-full relative z-10">
+        <div class="app-shell flex h-full relative z-10">
 
             <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
