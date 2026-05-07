@@ -153,32 +153,37 @@ $theme_uri = get_template_directory_uri();
             .sidebar-overlay { display: none!important; }
             .hamburger-btn { display: none!important; }
             .sidebar-toggle { display: flex!important; }
-            #app.sidebar-collapsed .sidebar { width: 96px; min-width: 96px; }
+            #app.sidebar-collapsed .sidebar { width: 88px; min-width: 88px; }
             #app.sidebar-collapsed .sidebar .sidebar-label,
             #app.sidebar-collapsed .sidebar .sidebar-meta,
             #app.sidebar-collapsed .sidebar .sidebar-section,
             #app.sidebar-collapsed .sidebar .del-btn { display: none!important; }
-            #app.sidebar-collapsed .sidebar .sidebar-top { padding: 18px 0; display: flex; flex-direction: column; align-items: center; gap: 18px; }
-            #app.sidebar-collapsed .sidebar .sidebar-head { flex-direction: column; justify-content: flex-start; align-items: center; gap: 12px; margin-bottom: 0; }
+            #app.sidebar-collapsed .sidebar .sidebar-top { padding: 16px 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+            #app.sidebar-collapsed .sidebar .sidebar-head { flex-direction: column; justify-content: flex-start; align-items: center; gap: 10px; margin-bottom: 0; }
             #app.sidebar-collapsed .sidebar .sidebar-brand-icon,
             #app.sidebar-collapsed .sidebar .new-chat-btn,
             #app.sidebar-collapsed .sidebar .chat-item,
             #app.sidebar-collapsed .sidebar .sidebar-user-row,
-            #app.sidebar-collapsed .sidebar .sidebar-toggle { width: 56px; height: 56px; min-width: 56px; padding: 0; margin: 0 auto; border-radius: 20px; }
+            #app.sidebar-collapsed .sidebar .sidebar-toggle { width: 52px; height: 52px; min-width: 52px; padding: 0; margin: 0 auto; border-radius: 18px; border: 1px solid rgba(65,240,165,.18); background: rgba(65,240,165,.055); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
             #app.sidebar-collapsed .sidebar .new-chat-btn,
             #app.sidebar-collapsed .sidebar .chat-item,
             #app.sidebar-collapsed .sidebar .sidebar-user-row,
             #app.sidebar-collapsed .sidebar .sidebar-toggle { justify-content: center; align-items: center; }
-            #app.sidebar-collapsed .sidebar .sidebar-toggle { order: 2; background: rgba(65,240,165,.08); border-color: rgba(65,240,165,.22); color: var(--accent); }
+            #app.sidebar-collapsed .sidebar .sidebar-brand-icon { width: 56px; height: 56px; min-width: 56px; border-radius: 20px; background: rgba(65,240,165,.09); border-color: rgba(65,240,165,.24); }
+            #app.sidebar-collapsed .sidebar .sidebar-toggle { order: 2; color: var(--accent); }
+            #app.sidebar-collapsed .sidebar .sidebar-toggle:hover,
+            #app.sidebar-collapsed .sidebar .new-chat-btn:hover,
+            #app.sidebar-collapsed .sidebar .chat-item:hover { background: rgba(65,240,165,.11); border-color: rgba(65,240,165,.28); }
             #app.sidebar-collapsed .sidebar .new-chat-btn { order: 3; }
             #app.sidebar-collapsed .sidebar .chat-item .flex { justify-content: center; }
             #app.sidebar-collapsed .sidebar .chat-item i,
             #app.sidebar-collapsed .sidebar .new-chat-btn i,
-            #app.sidebar-collapsed .sidebar .sidebar-user-row i { margin-top: 0; font-size: 15px; color: var(--accent); }
+            #app.sidebar-collapsed .sidebar .sidebar-user-row i { margin-top: 0; font-size: 14px; color: var(--accent); }
+            #app.sidebar-collapsed .sidebar .chat-item.active { background: rgba(65,240,165,.14); border-color: rgba(65,240,165,.34); }
             #app.sidebar-collapsed .sidebar .chat-item.active i { color: var(--accent); }
-            #app.sidebar-collapsed .sidebar #chatList { padding: 18px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-            #app.sidebar-collapsed .sidebar #sidebarFooter { padding: 18px 0; display: flex; justify-content: center; }
-            #app.sidebar-collapsed .sidebar #sidebarFooter > div { width: 56px; }
+            #app.sidebar-collapsed .sidebar #chatList { padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+            #app.sidebar-collapsed .sidebar #sidebarFooter { padding: 16px 0; display: flex; justify-content: center; }
+            #app.sidebar-collapsed .sidebar #sidebarFooter > div { width: 52px; }
             #app.sidebar-collapsed .sidebar .sidebar-toggle i { transform: rotate(180deg); }
         }
 
