@@ -23,7 +23,7 @@ $theme_uri = get_template_directory_uri();
                         surface: '#0c0c10',
                         card: '#131318',
                         border: '#1e1e26',
-                        muted: '#6b6b7b',
+                        muted: '#b7c3b3',
                     }
                 }
             }
@@ -39,7 +39,7 @@ $theme_uri = get_template_directory_uri();
         }
         :root {
             --bg: #07100d; --surface: rgba(8, 18, 15, 0.68); --card: rgba(10, 18, 17, 0.66); --border: rgba(224, 244, 229, 0.12);
-            --text: #f5f8ef; --muted: #a9b4a8; --accent: #41f0a5; --accent-dim: #23c783;
+            --text: #f5f8ef; --muted: #b7c3b3; --accent: #41f0a5; --accent-dim: #23c783;
             --panel-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -367,7 +367,7 @@ $theme_uri = get_template_directory_uri();
                     <i class="fas fa-cloud-arrow-up text-amber-400/70 text-xs flex-shrink-0"></i>
                     <p class="text-xs text-amber-200/70 flex-1">Гостевые чаты сохраняются на этом устройстве</p>
                     <button class="text-xs text-accent font-medium hover:text-accent-dim transition-colors flex-shrink-0 cursor-pointer" onclick="openAuthModal()">Войти</button>
-                    <button class="text-muted/50 hover:text-muted transition-colors cursor-pointer ml-1 flex-shrink-0" onclick="dismissBanner()" aria-label="Закрыть">
+                    <button class="text-muted/70 hover:text-muted transition-colors cursor-pointer ml-1 flex-shrink-0" onclick="dismissBanner()" aria-label="Закрыть">
                         <i class="fas fa-xmark text-xs"></i>
                     </button>
                 </div>
@@ -405,7 +405,7 @@ $theme_uri = get_template_directory_uri();
                                 <i class="fas fa-arrow-up text-xs sm:text-sm font-bold"></i>
                             </button>
                         </div>
-                        <p class="text-center text-[11px] text-muted/50 mt-2 hidden sm:block">GlossCheck может допускать ошибки. Проверяйте важную информацию.</p>
+                        <p class="text-center text-[11px] text-muted/75 mt-2 hidden sm:block">GlossCheck может допускать ошибки. Проверяйте важную информацию.</p>
                     </div>
                 </footer>
             </div>
@@ -680,7 +680,7 @@ $theme_uri = get_template_directory_uri();
             const el = $('chatList');
 
             if (chats.length === 0) {
-                el.innerHTML = `<div class="text-center py-10"><i class="fas fa-comments text-2xl text-muted/25 mb-3"></i><p class="text-[11px] text-muted/40">Пока нет диалогов</p></div>`;
+                el.innerHTML = `<div class="text-center py-10"><i class="fas fa-comments text-2xl text-muted/55 mb-3"></i><p class="text-[11px] text-muted/65">Пока нет диалогов</p></div>`;
                 return;
             }
 
@@ -690,18 +690,18 @@ $theme_uri = get_template_directory_uri();
 
             chats.forEach(chat => {
                 let grp = chat.updatedAt >= today ? 'Сегодня' : chat.updatedAt >= yesterday ? 'Вчера' : chat.updatedAt >= weekAgo ? 'На этой неделе' : 'Раньше';
-                if (grp !== lastGrp) { html += `<div class="sidebar-section px-3 pt-3 pb-1 text-[10px] font-semibold text-muted/35 uppercase tracking-wider">${grp}</div>`; lastGrp = grp; }
+                if (grp !== lastGrp) { html += `<div class="sidebar-section px-3 pt-3 pb-1 text-[10px] font-semibold text-muted/80 uppercase tracking-wider">${grp}</div>`; lastGrp = grp; }
                 const active = chat.id === curChatId;
                 const last = chat.messages.length > 0 ? chat.messages[chat.messages.length - 1].content.slice(0, 32) + (chat.messages[chat.messages.length - 1].content.length > 32 ? '...' : '') : 'Пустой диалог';
                 html += `
                     <div class="chat-item ${active ? 'active' : ''}" onclick="openChat('${chat.id}')" title="${esc(chat.title)}">
                         <div class="flex items-start gap-2.5">
-                            <i class="fas fa-message text-[10px] text-muted/35 mt-1 flex-shrink-0"></i>
+                            <i class="fas fa-message text-[10px] text-muted/80 mt-1 flex-shrink-0"></i>
                             <div class="sidebar-label flex-1 min-w-0">
                                 <p class="text-[13px] font-medium truncate ${active ? 'text-accent' : ''}">${esc(chat.title)}</p>
                                 <div class="flex items-center gap-2 mt-0.5">
-                                    <p class="text-[11px] text-muted/45 truncate flex-1">${esc(last)}</p>
-                                    <span class="text-[10px] text-muted/25 flex-shrink-0">${chat.messages.length}</span>
+                                    <p class="text-[11px] text-muted/70 truncate flex-1">${esc(last)}</p>
+                                    <span class="text-[10px] text-muted/55 flex-shrink-0">${chat.messages.length}</span>
                                 </div>
                             </div>
                             <button class="del-btn flex-shrink-0 mt-0.5" onclick="deleteChat('${chat.id}',event)" aria-label="Удалить"><i class="fas fa-xmark text-[11px]"></i></button>
@@ -733,11 +733,11 @@ $theme_uri = get_template_directory_uri();
                     <div class="space-y-2.5">
                         <div class="sidebar-user-row flex items-center gap-2.5 px-1">
                             <div class="w-9 h-9 rounded-full bg-muted/10 flex items-center justify-center flex-shrink-0">
-                                <i class="fas fa-user text-muted/40 text-xs"></i>
+                                <i class="fas fa-user text-muted/65 text-xs"></i>
                             </div>
                             <div class="sidebar-label flex-1 min-w-0">
                                 <p class="text-[13px] font-medium text-muted">Гость</p>
-                                <p class="text-[10px] text-muted/40">Чаты сохраняются в базе</p>
+                                <p class="text-[10px] text-muted/65">Чаты сохраняются в базе</p>
                             </div>
                         </div>
                         <button onclick="openAuthModal()" class="new-chat-btn w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl border border-accent/20 text-accent text-[13px] font-medium transition-all hover:bg-accent/[0.08] cursor-pointer" title="Войти для сохранения">
@@ -766,9 +766,9 @@ $theme_uri = get_template_directory_uri();
             msgs.forEach(m => {
                 const t = m.time || getTime();
                 if (m.role === 'user') {
-                    html += `<div class="flex justify-end gap-2.5"><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-user bg-accent text-[#050507] rounded-2xl rounded-br-sm px-4 py-3"><p class="text-sm leading-relaxed font-medium">${esc(m.content)}</p></div><p class="text-[11px] text-muted/50 mt-1.5 text-right pr-1">${t}</p></div><div class="w-8 h-8 rounded-full bg-accent/15 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-user text-accent text-[11px]"></i></div></div>`;
+                    html += `<div class="flex justify-end gap-2.5"><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-user bg-accent text-[#050507] rounded-2xl rounded-br-sm px-4 py-3"><p class="text-sm leading-relaxed font-medium">${esc(m.content)}</p></div><p class="text-[11px] text-muted/75 mt-1.5 text-right pr-1">${t}</p></div><div class="w-8 h-8 rounded-full bg-accent/15 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-user text-accent text-[11px]"></i></div></div>`;
                 } else {
-                    html += `<div class="flex gap-2.5"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><p class="text-sm leading-relaxed text-[var(--text)]">${esc(m.content)}</p></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/50">${t}</p><button class="copy-answer text-[11px] text-muted/60 hover:text-accent transition-colors" data-copy="${esc(m.content)}" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`;
+                    html += `<div class="flex gap-2.5"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><p class="text-sm leading-relaxed text-[var(--text)]">${esc(m.content)}</p></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="${esc(m.content)}" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`;
                 }
             });
             c.innerHTML = html;
@@ -806,7 +806,7 @@ $theme_uri = get_template_directory_uri();
             const c = $('msgContainer'), t = getTime();
             const w = c.querySelector('.flex.flex-col.items-center');
             if (w) w.remove();
-            c.insertAdjacentHTML('beforeend', `<div class="flex justify-end gap-2.5 msg-enter"><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-user bg-accent text-[#050507] rounded-2xl rounded-br-sm px-4 py-3"><p class="text-sm leading-relaxed font-medium">${esc(text)}</p></div><p class="text-[11px] text-muted/50 mt-1.5 text-right pr-1">${t}</p></div><div class="w-8 h-8 rounded-full bg-accent/15 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-user text-accent text-[11px]"></i></div></div>`);
+            c.insertAdjacentHTML('beforeend', `<div class="flex justify-end gap-2.5 msg-enter"><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-user bg-accent text-[#050507] rounded-2xl rounded-br-sm px-4 py-3"><p class="text-sm leading-relaxed font-medium">${esc(text)}</p></div><p class="text-[11px] text-muted/75 mt-1.5 text-right pr-1">${t}</p></div><div class="w-8 h-8 rounded-full bg-accent/15 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-user text-accent text-[11px]"></i></div></div>`);
             scrollDown();
             history.push({ role: 'user', content: text, time: t });
         }
@@ -820,7 +820,7 @@ $theme_uri = get_template_directory_uri();
 
         async function addAIMsg(text) {
             const id = 'ai-' + Date.now(), t = getTime();
-            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><p class="text-sm leading-relaxed text-[var(--text)]" id="${id}-t"></p></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/50">${t}</p><button class="copy-answer text-[11px] text-muted/60 hover:text-accent transition-colors" data-copy="" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`);
+            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><p class="text-sm leading-relaxed text-[var(--text)]" id="${id}-t"></p></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`);
             const el = $(id + '-t');
             if (!el) return;
             for (let i = 0; i < text.length; i++) {
