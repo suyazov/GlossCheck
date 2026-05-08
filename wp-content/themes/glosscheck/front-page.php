@@ -130,6 +130,12 @@ $theme_uri = get_template_directory_uri();
         .send-btn:not(:disabled):hover { background: var(--accent-dim); transform: scale(1.05); }
         .send-btn:not(:disabled):active { transform: scale(0.95); }
         .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .attach-btn { width: 42px; height: 42px; border-radius: 16px; color: var(--muted); background: rgba(255,255,255,.035); border: 1px solid rgba(224,244,229,.10); display: flex; align-items: center; justify-content: center; transition: color .2s, background .2s, border-color .2s, transform .15s; }
+        .attach-btn:hover { color: var(--accent); background: rgba(65,240,165,.08); border-color: rgba(65,240,165,.24); transform: translateY(-1px); }
+        .composer-note { max-width: 680px; margin-left: auto; margin-right: auto; }
+        @media (max-width: 640px) {
+            .attach-btn { width: 38px; height: 38px; border-radius: 14px; }
+        }
 
         .chip { transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s; cursor: pointer; }
         .chip:hover { background: rgba(65,240,165,0.11); border-color: rgba(65,240,165,0.34); color: var(--accent); transform: translateY(-1px); }
@@ -410,11 +416,18 @@ $theme_uri = get_template_directory_uri();
                     <div class="max-w-3xl mx-auto">
                         <div class="input-wrap flex items-center gap-2.5 sm:gap-3 bg-card rounded-[22px] border border-border px-4 sm:px-5 py-3 sm:py-3.5">
                             <input type="text" id="msgInput" placeholder="Напишите сообщение..." class="flex-1 bg-transparent outline-none text-base sm:text-lg text-[var(--text)] placeholder-muted" autocomplete="off" aria-label="Сообщение">
+                            <button id="attachBtn" class="attach-btn flex-shrink-0" type="button" title="Прикрепить фото" aria-label="Прикрепить фото">
+                                <i class="fas fa-paperclip text-sm"></i>
+                            </button>
+                            <input id="photoInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" aria-hidden="true">
                             <button id="sendBtn" class="send-btn w-12 h-12 rounded-2xl bg-accent text-[#05100b] flex items-center justify-center flex-shrink-0" aria-label="Отправить" disabled>
                                 <i class="fas fa-arrow-up text-xs sm:text-sm font-bold"></i>
                             </button>
                         </div>
-                        <p class="text-center text-[11px] text-muted/75 mt-2 hidden sm:block">GlossCheck — информационный сервис. Он может ошибаться. Не используйте его для медицинских решений и всегда проверяйте важную информацию.</p>
+                        <div class="composer-note text-center text-[11px] text-muted/75 mt-2 space-y-1">
+                            <p>Сейчас анализируется только текст. Фото: JPG, PNG или WebP до 5 МБ, но распознавание изображений пока не подключено.</p>
+                            <p class="hidden sm:block">GlossCheck — информационный сервис. Он может ошибаться. Не используйте его для медицинских решений и всегда проверяйте важную информацию.</p>
+                        </div>
                     </div>
                 </footer>
             </div>
@@ -451,6 +464,10 @@ $theme_uri = get_template_directory_uri();
             setTimeout(() => { el.style.transition = 'opacity .3s,transform .3s'; el.style.opacity = '0'; el.style.transform = 'translateX(20px)'; setTimeout(() => el.remove(), 300); }, 2800);
         }
 
+        function formatMb(bytes) {
+            return (bytes / 1024 / 1024).toFixed(1).replace('.0', '');
+        }
+
         /* ===== ХРАНИЛИЩЕ ===== */
         const getVisitorId = () => {
             let id = localStorage.getItem('gc_visitor_id');
@@ -462,6 +479,8 @@ $theme_uri = get_template_directory_uri();
         };
 
         /* ===== СОСТОЯНИЕ ===== */
+        const PHOTO_MAX_SIZE = 5 * 1024 * 1024;
+        const PHOTO_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
         let user = null;          // null = гость, объект = авторизован
         let curChatId = null;
         let history = [];         // текущие сообщения { role, content, time }
@@ -989,6 +1008,25 @@ $theme_uri = get_template_directory_uri();
         function updateSendBtn() { $('sendBtn').disabled = !$('msgInput').value.trim() || typing; }
         $('msgInput').addEventListener('input', updateSendBtn);
         $('sendBtn').addEventListener('click', sendMessage);
+        $('attachBtn').addEventListener('click', () => {
+            $('photoInput').click();
+        });
+        $('photoInput').addEventListener('change', e => {
+            const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+            e.target.value = '';
+            if (!file) return;
+
+            if (!PHOTO_ALLOWED_TYPES.includes(file.type)) {
+                toast('Поддерживаются только фото JPG, PNG или WebP.', 'error');
+                return;
+            }
+            if (file.size > PHOTO_MAX_SIZE) {
+                toast(`Фото слишком большое: ${formatMb(file.size)} МБ. Максимум — 5 МБ.`, 'error');
+                return;
+            }
+
+            toast('Фото выбрано, но сейчас анализируется только текст. Опишите продукт сообщением.', 'info');
+        });
         $('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
         /* ===== САЙДБАР ===== */
