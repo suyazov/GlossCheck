@@ -416,16 +416,16 @@ $theme_uri = get_template_directory_uri();
                     <div class="max-w-3xl mx-auto">
                         <div class="input-wrap flex items-center gap-2.5 sm:gap-3 bg-card rounded-[22px] border border-border px-4 sm:px-5 py-3 sm:py-3.5">
                             <input type="text" id="msgInput" placeholder="Напишите сообщение..." class="flex-1 bg-transparent outline-none text-base sm:text-lg text-[var(--text)] placeholder-muted" autocomplete="off" aria-label="Сообщение">
-                            <button id="attachBtn" class="attach-btn flex-shrink-0" type="button" title="Прикрепить фото" aria-label="Прикрепить фото">
+                            <button id="attachBtn" class="attach-btn flex-shrink-0" type="button" title="Прикрепить файл" aria-label="Прикрепить файл">
                                 <i class="fas fa-paperclip text-sm"></i>
                             </button>
-                            <input id="photoInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" aria-hidden="true">
+                            <input id="fileInput" class="hidden" type="file" multiple accept="image/*,.pdf,.doc,.docx,.txt,.rtf,.csv,.xls,.xlsx,.ppt,.pptx" aria-hidden="true">
                             <button id="sendBtn" class="send-btn w-12 h-12 rounded-2xl bg-accent text-[#05100b] flex items-center justify-center flex-shrink-0" aria-label="Отправить" disabled>
                                 <i class="fas fa-arrow-up text-xs sm:text-sm font-bold"></i>
                             </button>
                         </div>
                         <div class="composer-note text-center text-[11px] text-muted/75 mt-2 space-y-1">
-                            <p>Сейчас анализируется только текст. Фото: JPG, PNG или WebP до 5 МБ, но распознавание изображений пока не подключено.</p>
+                            <p>В этом режиме извлекается только текст. Можно выбрать документы или изображения: максимум 50 файлов, до 100 МБ каждый.</p>
                             <p class="hidden sm:block">GlossCheck — информационный сервис. Он может ошибаться. Не используйте его для медицинских решений и всегда проверяйте важную информацию.</p>
                         </div>
                     </div>
@@ -479,8 +479,9 @@ $theme_uri = get_template_directory_uri();
         };
 
         /* ===== СОСТОЯНИЕ ===== */
-        const PHOTO_MAX_SIZE = 5 * 1024 * 1024;
-        const PHOTO_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+        const FILE_MAX_SIZE = 100 * 1024 * 1024;
+        const FILE_MAX_COUNT = 50;
+        const FILE_ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tif', 'tiff', 'heic', 'pdf', 'doc', 'docx', 'txt', 'rtf', 'csv', 'xls', 'xlsx', 'ppt', 'pptx'];
         let user = null;          // null = гость, объект = авторизован
         let curChatId = null;
         let history = [];         // текущие сообщения { role, content, time }
@@ -1009,23 +1010,32 @@ $theme_uri = get_template_directory_uri();
         $('msgInput').addEventListener('input', updateSendBtn);
         $('sendBtn').addEventListener('click', sendMessage);
         $('attachBtn').addEventListener('click', () => {
-            $('photoInput').click();
+            $('fileInput').click();
         });
-        $('photoInput').addEventListener('change', e => {
-            const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+        $('fileInput').addEventListener('change', e => {
+            const files = Array.from(e.target.files || []);
             e.target.value = '';
-            if (!file) return;
+            if (files.length === 0) return;
 
-            if (!PHOTO_ALLOWED_TYPES.includes(file.type)) {
-                toast('Поддерживаются только фото JPG, PNG или WebP.', 'error');
+            if (files.length > FILE_MAX_COUNT) {
+                toast(`Можно прикрепить максимум ${FILE_MAX_COUNT} файлов за раз.`, 'error');
                 return;
             }
-            if (file.size > PHOTO_MAX_SIZE) {
-                toast(`Фото слишком большое: ${formatMb(file.size)} МБ. Максимум — 5 МБ.`, 'error');
+            const unsupported = files.find(file => {
+                const ext = (file.name.split('.').pop() || '').toLowerCase();
+                return !FILE_ALLOWED_EXTENSIONS.includes(ext);
+            });
+            if (unsupported) {
+                toast('Поддерживаются документы и изображения: JPG, PNG, WebP, PDF, DOCX, TXT, XLSX и похожие форматы.', 'error');
+                return;
+            }
+            const oversized = files.find(file => file.size > FILE_MAX_SIZE);
+            if (oversized) {
+                toast(`Файл ${oversized.name} слишком большой: ${formatMb(oversized.size)} МБ. Максимум — 100 МБ каждый.`, 'error');
                 return;
             }
 
-            toast('Фото выбрано, но сейчас анализируется только текст. Опишите продукт сообщением.', 'info');
+            toast('Файлы выбраны, но сейчас в чат отправляется только текст. Скопируйте или опишите нужные данные сообщением.', 'info');
         });
         $('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
