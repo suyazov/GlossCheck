@@ -392,7 +392,7 @@ $theme_uri = get_template_directory_uri();
                             <div class="flex items-center gap-1.5 mt-0.5"><div class="w-1.5 h-1.5 rounded-full bg-accent status-dot"></div><span class="text-[10px] text-muted">GlossCheck AI</span></div>
                         </div>
                         <div class="hidden sm:block">
-                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-accent status-dot"></div><span class="text-sm font-semibold text-[var(--text)]">Чат с DeepSeek</span></div>
+                            <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-accent status-dot"></div><span class="text-sm font-semibold text-[var(--text)]">Чат с GlossCheck</span></div>
                         </div>
                     </div>
                     <button class="w-11 h-11 rounded-2xl border border-border bg-card/70 flex items-center justify-center text-muted hover:text-accent hover:border-accent/30 transition-all cursor-pointer" onclick="clearCurrentChat()" title="Очистить диалог" aria-label="Очистить">
@@ -414,7 +414,7 @@ $theme_uri = get_template_directory_uri();
                                 <i class="fas fa-arrow-up text-xs sm:text-sm font-bold"></i>
                             </button>
                         </div>
-                        <p class="text-center text-[11px] text-muted/75 mt-2 hidden sm:block">GlossCheck может допускать ошибки. Проверяйте важную информацию.</p>
+                        <p class="text-center text-[11px] text-muted/75 mt-2 hidden sm:block">GlossCheck — информационный сервис. Он может ошибаться. Не используйте его для медицинских решений и всегда проверяйте важную информацию.</p>
                     </div>
                 </footer>
             </div>
@@ -878,14 +878,14 @@ $theme_uri = get_template_directory_uri();
                 <div class="flex flex-col items-center text-center mt-6 sm:mt-10 fade-in">
                     <div class="welcome-mark w-20 h-20 rounded-[28px] bg-accent/10 border border-accent/20 flex items-center justify-center mb-7"><i class="fas fa-bolt text-accent text-2xl"></i></div>
                     <p class="text-xs uppercase tracking-[0.22em] text-accent/80 mb-3">GlossCheck AI</p>
-                    <h2 class="text-3xl sm:text-4xl font-bold tracking-tight mb-3 text-[var(--text)]">Начните диалог</h2>
-                    <p class="text-base text-muted max-w-xl leading-relaxed">Проверьте формулировку, задайте вопрос или продолжите сохранённый разговор.</p>
+                    <h2 class="text-3xl sm:text-4xl font-bold tracking-tight mb-3 text-[var(--text)]">Проверьте продукт</h2>
+                    <p class="text-base text-muted max-w-xl leading-relaxed">Проведите Gloss проверку, изучите состав и узнайте об ингредиентах</p>
                 </div>
                 <div id="suggestions" class="flex flex-wrap gap-2.5 justify-center mt-8 fade-in" style="animation-delay:.15s">
                     <button onclick="useSuggestion('Что ты умеешь?')" class="chip px-5 py-3 rounded-full bg-card/90 border border-border text-sm text-muted flex items-center gap-2.5 shadow-[0_12px_34px_rgba(0,0,0,.16)]"><i class="fas fa-wand-magic-sparkles text-xs text-accent/70"></i>Что ты умеешь?</button>
                     <button onclick="useSuggestion('Расскажи о себе')" class="chip px-5 py-3 rounded-full bg-card/90 border border-border text-sm text-muted flex items-center gap-2.5 shadow-[0_12px_34px_rgba(0,0,0,.16)]"><i class="fas fa-circle-info text-xs text-accent/70"></i>Расскажи о себе</button>
                     <button onclick="useSuggestion('Как это работает?')" class="chip px-5 py-3 rounded-full bg-card/90 border border-border text-sm text-muted flex items-center gap-2.5 shadow-[0_12px_34px_rgba(0,0,0,.16)]"><i class="fas fa-gear text-xs text-accent/70"></i>Как это работает?</button>
-                    <button onclick="useSuggestion('Напиши шутку')" class="chip px-5 py-3 rounded-full bg-card/90 border border-border text-sm text-muted flex items-center gap-2.5 shadow-[0_12px_34px_rgba(0,0,0,.16)]"><i class="fas fa-face-smile text-xs text-accent/70"></i>Напиши шутку</button>
+                    <button onclick="useSuggestion('Рекомендации')" class="chip px-5 py-3 rounded-full bg-card/90 border border-border text-sm text-muted flex items-center gap-2.5 shadow-[0_12px_34px_rgba(0,0,0,.16)]"><i class="fas fa-circle-check text-xs text-accent/70"></i>Рекомендации</button>
                 </div>`;
             sugVisible = true;
         }

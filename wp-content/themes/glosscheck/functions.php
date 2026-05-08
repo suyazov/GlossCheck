@@ -14,3 +14,12 @@ add_filter('show_admin_bar', function ($show) {
 
     return current_user_can('manage_options');
 });
+
+add_filter('document_title_parts', function ($title) {
+    if (is_front_page() || is_home()) {
+        $title['title'] = 'Чат с GlossCheck';
+        $title['site'] = 'GlossCheck';
+    }
+
+    return $title;
+});
