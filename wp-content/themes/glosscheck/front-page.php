@@ -351,8 +351,10 @@ $theme_uri = get_template_directory_uri();
             </div>
 
             <button id="btnLogin" class="btn-primary" onclick="doLogin()"><i class="fas fa-arrow-right-to-bracket mr-1.5 text-[11px]"></i>Войти</button>
-            <button type="button" id="resetPassLink" class="btn-primary mt-3 bg-transparent text-accent border border-accent/25 hover:bg-accent/[0.08]" onclick="doResetPassword()">Восстановить пароль</button>
             <button id="btnReg" class="btn-primary" onclick="doRegister()" style="display:none"><i class="fas fa-user-plus mr-1.5 text-[11px]"></i>Создать аккаунт</button>
+            <div class="flex justify-center mt-7">
+                <button type="button" id="resetPassLink" class="text-accent text-xs hover:text-accent-dim transition-colors underline-offset-2 hover:underline" onclick="doResetPassword()" style="background:none;border:none;cursor:pointer;padding:0">Восстановить пароль</button>
+            </div>
         </div>
     </div>
 
