@@ -6,29 +6,11 @@ $theme_uri = get_template_directory_uri();
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="<?php echo esc_url($theme_uri); ?>/assets/images/favicon.svg" type="image/svg+xml">
-    <link rel="shortcut icon" href="<?php echo esc_url($theme_uri); ?>/assets/images/favicon.svg" type="image/svg+xml">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Manrope', 'sans-serif'] },
-                    colors: {
-                        accent: '#00d68f',
-                        'accent-dim': '#00a36e',
-                        surface: '#0c0c10',
-                        card: '#131318',
-                        border: '#1e1e26',
-                        muted: '#b7c3b3',
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="preload" href="<?php echo esc_url($theme_uri); ?>/assets/images/bg_mobile.webp" as="image" type="image/webp" media="(max-width: 767px)" fetchpriority="high">
+    <link rel="preload" href="<?php echo esc_url($theme_uri); ?>/assets/css/glosscheck-tailwind.css" as="style">
+    <link rel="stylesheet" href="<?php echo esc_url($theme_uri); ?>/assets/css/glosscheck-tailwind.css">
     <style>
         @font-face {
             font-family: "Canis Minor";
@@ -45,13 +27,42 @@ $theme_uri = get_template_directory_uri();
         * { margin: 0; padding: 0; box-sizing: border-box; }
         button { outline: none; }
         button:focus-visible { outline: 2px solid rgba(65,240,165,.44); outline-offset: 3px; }
+        .fa, .fas { display: inline-block; width: 1em; min-width: 1em; font-style: normal; font-weight: 700; line-height: 1; text-align: center; speak: never; }
+        .fa::before, .fas::before { content: ""; }
+        .fa-angles-left::before { content: "<<"; font-size: .78em; }
+        .fa-arrow-right-to-bracket::before, .fa-right-to-bracket::before { content: "->"; font-size: .78em; }
+        .fa-arrow-up::before { content: "^"; }
+        .fa-bars::before { content: "="; }
+        .fa-bolt::before { content: "S"; }
+        .fa-circle-check::before { content: "OK"; font-size: .68em; }
+        .fa-circle-exclamation::before { content: "!"; }
+        .fa-circle-info::before { content: "i"; font-family: Georgia, serif; }
+        .fa-cloud-arrow-up::before { content: "^"; }
+        .fa-comments::before, .fa-message::before { content: "..."; font-size: .76em; }
+        .fa-copy::before { content: "[]"; font-size: .68em; }
+        .fa-ellipsis::before { content: "..."; }
+        .fa-eraser::before { content: "x"; }
+        .fa-eye::before { content: "o"; }
+        .fa-eye-slash::before { content: "ø"; }
+        .fa-gear::before { content: "*"; }
+        .fa-paperclip::before { content: "@"; }
+        .fa-pen::before { content: "/"; }
+        .fa-plus::before, .fa-user-plus::before { content: "+"; }
+        .fa-right-from-bracket::before { content: "<-"; font-size: .78em; }
+        .fa-robot::before { content: "AI"; font-size: .68em; }
+        .fa-share::before { content: ">"; }
+        .fa-thumbtack::before { content: "|"; }
+        .fa-trash-can::before { content: "#"; }
+        .fa-user::before { content: "u"; }
+        .fa-wand-magic-sparkles::before { content: "*"; }
+        .fa-xmark::before { content: "×"; }
         html { margin-top: 0!important; }
         body.admin-bar { --wp-admin-bar-offset: 32px; }
         body.admin-bar #wpadminbar { position: fixed; }
         body {
-            font-family: 'Manrope', sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             background-color: var(--bg);
-            background-image: linear-gradient(120deg, rgba(5, 12, 10, 0.34), rgba(5, 12, 10, 0.46)), url('<?php echo esc_url($theme_uri); ?>/assets/images/bg_desktop.jpg');
+            background-image: linear-gradient(120deg, rgba(5, 12, 10, 0.34), rgba(5, 12, 10, 0.46)), image-set(url('<?php echo esc_url($theme_uri); ?>/assets/images/bg_desktop.webp') type('image/webp'), url('<?php echo esc_url($theme_uri); ?>/assets/images/bg_desktop.jpg') type('image/jpeg'));
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -222,8 +233,9 @@ $theme_uri = get_template_directory_uri();
         .chat-context-item.danger:hover { background: rgba(220,38,38,.08); }
         .chat-context-item i { width: 14px; text-align: center; font-size: 12px; }
 
-        .status-dot { animation: sPulse 2.5s ease-in-out infinite; }
-        @keyframes sPulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,214,143,0.4)} 50%{box-shadow:0 0 0 4px rgba(0,214,143,0)} }
+        .status-dot { position: relative; }
+        .status-dot::after { content: ''; position: absolute; inset: -4px; border-radius: inherit; background: rgba(65,240,165,.24); animation: sPulse 2.5s ease-in-out infinite; }
+        @keyframes sPulse { 0%,100%{transform:scale(.35);opacity:.85} 55%{transform:scale(1);opacity:0} }
 
         .msg-bubble-user { transition: box-shadow 0.2s; }
         .msg-bubble-user:hover { box-shadow: 0 0 20px rgba(0,214,143,0.12); }
@@ -288,7 +300,7 @@ $theme_uri = get_template_directory_uri();
         }
         @media (max-width: 640px) {
             body {
-                background-image: linear-gradient(rgba(5, 11, 9, 0.18), rgba(5, 11, 9, 0.42)), url('<?php echo esc_url($theme_uri); ?>/assets/images/bg_mobile.jpg');
+                background-image: linear-gradient(rgba(5, 11, 9, 0.18), rgba(5, 11, 9, 0.42)), image-set(url('<?php echo esc_url($theme_uri); ?>/assets/images/bg_mobile.webp') type('image/webp'), url('<?php echo esc_url($theme_uri); ?>/assets/images/bg_mobile.jpg') type('image/jpeg'));
                 background-attachment: scroll;
             }
             .brand-wordmark { font-size: 28px!important; }
@@ -339,6 +351,7 @@ $theme_uri = get_template_directory_uri();
             </div>
 
             <button id="btnLogin" class="btn-primary" onclick="doLogin()"><i class="fas fa-arrow-right-to-bracket mr-1.5 text-[11px]"></i>Войти</button>
+            <button type="button" id="resetPassLink" class="btn-primary mt-3 bg-transparent text-accent border border-accent/25 hover:bg-accent/[0.08]" onclick="doResetPassword()">Восстановить пароль</button>
             <button id="btnReg" class="btn-primary" onclick="doRegister()" style="display:none"><i class="fas fa-user-plus mr-1.5 text-[11px]"></i>Создать аккаунт</button>
         </div>
     </div>
@@ -541,7 +554,12 @@ $theme_uri = get_template_directory_uri();
             const requestedChat = new URLSearchParams(window.location.search).get('chat');
             const initialChat = requestedChat && serverChats.some(c => c.id === requestedChat) ? requestedChat : serverChats[0]?.id;
             if (initialChat) openChat(initialChat);
-            else await createNewChat();
+            else {
+                curChatId = null;
+                history = [];
+                renderChatList();
+                showWelcome();
+            }
         }
 
         /* ===== МОДАЛКА АВТОРИЗАЦИИ ===== */
@@ -564,8 +582,10 @@ $theme_uri = get_template_directory_uri();
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
             $('nameWrap').style.display = tab === 'register' ? 'block' : 'none';
             $('btnLogin').style.display = tab === 'login' ? 'block' : 'none';
+            $('resetPassLink').style.display = tab === 'login' ? 'block' : 'none';
             $('btnReg').style.display = tab === 'register' ? 'block' : 'none';
             $('authModalTitle').textContent = tab === 'login' ? 'Войти' : 'Создать аккаунт';
+            $('authPass').setAttribute('autocomplete', tab === 'login' ? 'current-password' : 'new-password');
             $('authErr').classList.remove('show'); $('authOk').classList.remove('show');
             document.querySelectorAll('.input-field').forEach(f => f.classList.remove('error'));
         }
@@ -615,6 +635,28 @@ $theme_uri = get_template_directory_uri();
                 showErr(err.message || 'Не удалось войти.');
             } finally {
                 $('btnLogin').disabled = false;
+            }
+        }
+
+        async function doResetPassword() {
+            const email = $('authEmail').value.trim().toLowerCase();
+            document.querySelectorAll('.input-field').forEach(f => f.classList.remove('error'));
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                $('authEmail').classList.add('error');
+                showErr('Введите email, к которому привязан аккаунт.');
+                return;
+            }
+
+            $('resetPassLink').disabled = true;
+            showOk('Отправляем ссылку для восстановления...');
+            try {
+                const data = await authApi('glosscheck_chat_reset_password', { email });
+                if (data.nonce) GC_CHAT.nonce = data.nonce;
+                showOk(data.message || 'Проверьте почту: мы отправили ссылку для восстановления.');
+            } catch (err) {
+                showErr(err.message || 'Не удалось отправить письмо.');
+            } finally {
+                $('resetPassLink').disabled = false;
             }
         }
 
@@ -1067,24 +1109,34 @@ $theme_uri = get_template_directory_uri();
 
         /* ===== ИНИЦИАЛИЗАЦИЯ ===== */
         (async function init() {
-            try {
-                const data = await authApi('glosscheck_chat_current_user');
-                if (data.nonce) GC_CHAT.nonce = data.nonce;
-                user = data.user || null;
-            } catch (err) {
-                user = null;
-            }
-
-            /* Показать приложение */
             $('app').style.display = 'block';
             applySidebarCollapse();
-
             refreshUI();
+            showWelcome();
+            updateSendBtn();
 
-            try {
-                await loadServerChats();
-            } catch (err) {
-                toast(err.message || 'Не удалось загрузить диалоги', 'error');
+            const startNetwork = async () => {
+                try {
+                    const data = await authApi('glosscheck_chat_current_user');
+                    if (data.nonce) GC_CHAT.nonce = data.nonce;
+                    user = data.user || null;
+                } catch (err) {
+                    user = null;
+                }
+
+                refreshUI();
+
+                try {
+                    await loadServerChats();
+                } catch (err) {
+                    toast(err.message || 'Не удалось загрузить диалоги', 'error');
+                }
+            };
+
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(startNetwork, { timeout: 900 });
+            } else {
+                setTimeout(startNetwork, 250);
             }
 
             $('msgInput').focus();

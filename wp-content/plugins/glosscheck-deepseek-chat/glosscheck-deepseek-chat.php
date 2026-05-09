@@ -28,7 +28,7 @@ final class GlossCheck_DeepSeek_Chat {
         add_action('admin_init', [__CLASS__, 'settings']);
         add_shortcode('deepseek_chat', [__CLASS__, 'shortcode']);
 
-        foreach (['send', 'list', 'create', 'clear', 'delete', 'rename', 'pin', 'current_user', 'register', 'login', 'logout'] as $action) {
+        foreach (['send', 'list', 'create', 'clear', 'delete', 'rename', 'pin', 'current_user', 'register', 'login', 'logout', 'reset_password'] as $action) {
             add_action('wp_ajax_glosscheck_chat_' . $action, [__CLASS__, 'ajax_' . $action]);
             add_action('wp_ajax_nopriv_glosscheck_chat_' . $action, [__CLASS__, 'ajax_' . $action]);
         }
@@ -784,6 +784,49 @@ final class GlossCheck_DeepSeek_Chat {
         wp_send_json_success(['ok' => true, 'nonce' => wp_create_nonce(self::NONCE)]);
     }
 
+    public static function ajax_reset_password(): void {
+        self::verify();
+
+        $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+        if (!is_email($email)) {
+            wp_send_json_error(['message' => 'Введите корректный email.'], 400);
+        }
+
+        $user = get_user_by('email', $email);
+        if (!$user) {
+            wp_send_json_success([
+                'message' => 'Если аккаунт с таким email существует, мы отправили ссылку для восстановления.',
+                'nonce' => wp_create_nonce(self::NONCE),
+            ]);
+        }
+
+        $key = get_password_reset_key($user);
+        if (is_wp_error($key)) {
+            wp_send_json_error(['message' => 'Не удалось создать ссылку восстановления. Попробуйте позже.'], 500);
+        }
+
+        $reset_url = network_site_url(
+            'wp-login.php?action=rp&key=' . rawurlencode($key) . '&login=' . rawurlencode($user->user_login),
+            'login'
+        );
+        $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES) ?: 'GlossCheck';
+        $sent = wp_mail(
+            $user->user_email,
+            sprintf('[%s] Восстановление пароля', $site_name),
+            self::password_reset_email_html($user, $reset_url, $site_name),
+            ['Content-Type: text/html; charset=UTF-8']
+        );
+
+        if (!$sent) {
+            wp_send_json_error(['message' => 'Не удалось отправить письмо. Попробуйте позже.'], 500);
+        }
+
+        wp_send_json_success([
+            'message' => 'Если аккаунт с таким email существует, мы отправили ссылку для восстановления.',
+            'nonce' => wp_create_nonce(self::NONCE),
+        ]);
+    }
+
     public static function ajax_send(): void {
         self::verify();
         self::blocked_guard();
@@ -1009,6 +1052,58 @@ final class GlossCheck_DeepSeek_Chat {
         }
 
         return !empty($chat['user_id']) ? 'Пользователь #' . (int) $chat['user_id'] : 'Гость';
+    }
+
+    private static function password_reset_email_html(WP_User $user, string $reset_url, string $site_name): string {
+        $display_name = $user->display_name ?: $user->user_email;
+        $escaped_name = esc_html($display_name);
+        $escaped_site = esc_html($site_name);
+        $escaped_url = esc_url($reset_url);
+        $home_url = esc_url(home_url('/'));
+        $year = esc_html(date_i18n('Y'));
+
+        return '<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Восстановление пароля</title>
+</head>
+<body style="margin:0;padding:0;background:#07100d;color:#f5f8ef;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#07100d;padding:28px 12px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#0b1714;border:1px solid rgba(224,244,229,.16);border-radius:20px;overflow:hidden;">
+                    <tr>
+                        <td style="padding:28px 30px 16px;border-bottom:1px solid rgba(224,244,229,.10);">
+                            <div style="font-size:12px;line-height:1.4;letter-spacing:.16em;text-transform:uppercase;color:#41f0a5;font-weight:700;">' . $escaped_site . '</div>
+                            <h1 style="margin:12px 0 0;font-size:26px;line-height:1.2;color:#f5f8ef;font-weight:800;">Восстановление пароля</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:26px 30px 10px;">
+                            <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#dce7dc;">Здравствуйте, ' . $escaped_name . '.</p>
+                            <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#b7c3b3;">Мы получили запрос на смену пароля для вашего аккаунта. Нажмите кнопку ниже, чтобы задать новый пароль.</p>
+                            <p style="margin:0 0 26px;">
+                                <a href="' . $escaped_url . '" style="display:inline-block;background:#41f0a5;color:#05100c;text-decoration:none;font-size:15px;line-height:1;font-weight:800;padding:15px 22px;border-radius:14px;">Сменить пароль</a>
+                            </p>
+                            <p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:#8f9b91;">Если кнопка не открывается, скопируйте ссылку в браузер:</p>
+                            <p style="margin:0 0 22px;font-size:13px;line-height:1.55;color:#41f0a5;word-break:break-all;"><a href="' . $escaped_url . '" style="color:#41f0a5;">' . $escaped_url . '</a></p>
+                            <p style="margin:0;font-size:13px;line-height:1.55;color:#8f9b91;">Если вы не запрашивали восстановление, просто проигнорируйте это письмо. Старый пароль останется действительным.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:22px 30px 28px;">
+                            <div style="height:1px;background:rgba(224,244,229,.10);margin-bottom:18px;"></div>
+                            <p style="margin:0;font-size:12px;line-height:1.5;color:#6f7b72;">© ' . $year . ' <a href="' . $home_url . '" style="color:#9fb0a1;text-decoration:none;">' . $escaped_site . '</a>. Письмо отправлено автоматически.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>';
     }
 
     private static function chat_owner_title(array $chat): string {
