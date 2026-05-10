@@ -8,10 +8,11 @@ $theme_uri = get_template_directory_uri();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="<?php echo esc_url($theme_uri); ?>/assets/images/favicon.svg" type="image/svg+xml">
     <link rel="shortcut icon" href="<?php echo esc_url($theme_uri); ?>/assets/images/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="<?php echo esc_url($theme_uri); ?>/assets/css/fa-icons.css">
+    <link rel="preload" href="<?php echo esc_url($theme_uri); ?>/assets/fonts/manrope-500.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="<?php echo esc_url($theme_uri); ?>/assets/fonts/manrope-600.woff2" as="font" type="font/woff2" crossorigin>
     <script>
         tailwind.config = {
             theme: {
@@ -31,6 +32,30 @@ $theme_uri = get_template_directory_uri();
     </script>
     <style>
         @font-face {
+            font-family: 'Manrope'; font-style: normal; font-weight: 300; font-display: swap;
+            src: url('<?php echo esc_url($theme_uri); ?>/assets/fonts/manrope-300.woff2') format('woff2');
+        }
+        @font-face {
+            font-family: 'Manrope'; font-style: normal; font-weight: 400; font-display: swap;
+            src: url('<?php echo esc_url($theme_uri); ?>/assets/fonts/manrope-400.woff2') format('woff2');
+        }
+        @font-face {
+            font-family: 'Manrope'; font-style: normal; font-weight: 500; font-display: swap;
+            src: url('<?php echo esc_url($theme_uri); ?>/assets/fonts/manrope-500.woff2') format('woff2');
+        }
+        @font-face {
+            font-family: 'Manrope'; font-style: normal; font-weight: 600; font-display: swap;
+            src: url('<?php echo esc_url($theme_uri); ?>/assets/fonts/manrope-600.woff2') format('woff2');
+        }
+        @font-face {
+            font-family: 'Manrope'; font-style: normal; font-weight: 700; font-display: swap;
+            src: url('<?php echo esc_url($theme_uri); ?>/assets/fonts/manrope-700.woff2') format('woff2');
+        }
+        @font-face {
+            font-family: 'Manrope'; font-style: normal; font-weight: 800; font-display: swap;
+            src: url('<?php echo esc_url($theme_uri); ?>/assets/fonts/manrope-800.woff2') format('woff2');
+        }
+        @font-face {
             font-family: "Canis Minor";
             src: url('<?php echo esc_url($theme_uri); ?>/assets/fonts/canis-minor.otf') format('opentype');
             font-display: swap;
@@ -49,7 +74,7 @@ $theme_uri = get_template_directory_uri();
         body {
             font-family: 'Manrope', sans-serif;
             background-color: var(--bg);
-            background-image: linear-gradient(120deg, rgba(5, 12, 10, 0.2), rgba(5, 12, 10, 0.5)), url('<?php echo esc_url($theme_uri); ?>/assets/images/bg_desktop.jpg');
+            background-image: linear-gradient(120deg, rgba(5, 12, 10, 0.2), rgba(5, 12, 10, 0.5)), image-set('<?php echo esc_url($theme_uri); ?>/assets/images/bg_desktop.webp' type('image/webp'), '<?php echo esc_url($theme_uri); ?>/assets/images/bg_desktop.jpg' type('image/jpeg'));
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -271,7 +296,7 @@ $theme_uri = get_template_directory_uri();
         }
         @media (max-width: 640px) {
             body {
-                background-image: linear-gradient(rgba(5, 11, 9, 0.18), rgba(5, 11, 9, 0.42)), url('<?php echo esc_url($theme_uri); ?>/assets/images/bg_mobile.jpg');
+                background-image: linear-gradient(rgba(5, 11, 9, 0.18), rgba(5, 11, 9, 0.42)), image-set('<?php echo esc_url($theme_uri); ?>/assets/images/bg_mobile.webp' type('image/webp'), '<?php echo esc_url($theme_uri); ?>/assets/images/bg_mobile.jpg' type('image/jpeg'));
                 background-attachment: scroll;
             }
             .brand-wordmark { font-size: 28px!important; }
