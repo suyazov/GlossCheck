@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^git log --oneline -3 && git push -v origin main 2>&1 \\| tail -20$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
