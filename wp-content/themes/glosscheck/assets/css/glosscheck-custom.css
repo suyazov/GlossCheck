@@ -35,10 +35,6 @@ body {
     body.admin-bar { --wp-admin-bar-offset: 46px; }
 }
 
-/* === Icon SVGs === */
-.gc-icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.125em; flex-shrink: 0; }
-.gc-icon svg { width: 100%; height: 100%; display: block; }
-
 /* === Brand === */
 .brand-wordmark {
     font-family: "Canis Minor", "Cormorant Garamond", Georgia, serif;
@@ -176,19 +172,19 @@ body::after {
     #app.sidebar-collapsed .sidebar .chat-item:hover { background: rgba(65,240,165,.11); border-color: rgba(65,240,165,.28); }
     #app.sidebar-collapsed .sidebar .new-chat-btn { order: 3; }
     #app.sidebar-collapsed .sidebar .chat-item .flex { justify-content: center; }
-    #app.sidebar-collapsed .sidebar .chat-item .gc-icon,
-    #app.sidebar-collapsed .sidebar .new-chat-btn .gc-icon,
-    #app.sidebar-collapsed .sidebar .sidebar-user-row .gc-icon { margin-top: 0; }
+    #app.sidebar-collapsed .sidebar .chat-item i,
+    #app.sidebar-collapsed .sidebar .new-chat-btn i,
+    #app.sidebar-collapsed .sidebar .sidebar-user-row i { margin-top: 0; }
     #app.sidebar-collapsed .sidebar .chat-item.active { background: rgba(65,240,165,.14); border-color: rgba(65,240,165,.34); }
     #app.sidebar-collapsed .sidebar #chatList { padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
     #app.sidebar-collapsed .sidebar #sidebarFooter { padding: 16px 0; display: flex; justify-content: center; }
     #app.sidebar-collapsed .sidebar #sidebarFooter > div { width: 52px; }
-    #app.sidebar-collapsed .sidebar .sidebar-toggle .gc-icon { transform: rotate(180deg); }
+    #app.sidebar-collapsed .sidebar .sidebar-toggle i { transform: rotate(180deg); }
 }
 
 /* === Chat items === */
 .chat-item {
-    position: relative; padding: 12px 14px; border-radius: 16px; cursor: pointer;
+    position: relative; padding: 13px 16px; border-radius: 16px; cursor: pointer;
     transition: background 0.2s, border-color 0.2s; border: 1px solid transparent;
 }
 .chat-item:hover { background: rgba(255,255,255,0.035); }
@@ -203,7 +199,7 @@ body::after {
 .chat-context-item:hover { background: rgba(8,18,15,.07); }
 .chat-context-item.danger { color: #dc2626; }
 .chat-context-item.danger:hover { background: rgba(220,38,38,.08); }
-.chat-context-item .gc-icon { width: 14px; height: 14px; }
+.chat-context-item i { width: 14px; height: 14px; font-size: 12px; text-align: center; }
 
 /* === Status dot === */
 .status-dot { position: relative; }
@@ -227,7 +223,7 @@ body::after {
 .modal-box {
     background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
     backdrop-filter: blur(22px);
-    width: 100%; max-width: 400px; margin: 0 16px; padding: 28px;
+    width: 100%; max-width: 420px; margin: 0 16px; padding: 32px;
     transform: scale(0.92); opacity: 0; transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.3s;
 }
 
@@ -248,7 +244,7 @@ body::after {
 
 /* === Layout sections === */
 .app-header {
-    min-height: 72px;
+    min-height: 76px;
     background: linear-gradient(180deg, rgba(7,17,14,.50), rgba(7,17,14,.36));
     box-shadow: 0 1px 0 rgba(255,255,255,.025);
     border-color: rgba(224,244,229,.08)!important;

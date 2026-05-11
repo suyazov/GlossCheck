@@ -9,7 +9,7 @@
     const esc = (t) => { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; };
     const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-    const ic = (name, cls) => `<span class="gc-icon ${cls || ''}">${gcIcon(name)}</span>`;
+    const ic = (name, cls) => `<i class="fas fa-${name}${cls ? ' ' + cls : ''}"></i>`;
 
     function scrollDown() {
         requestAnimationFrame(() => {
@@ -51,7 +51,6 @@
         return user ? `wp:${user.id || user.email}` : `guest:${getVisitorId()}`;
     }
 
-    /* ===== Visitor ID ===== */
     const getVisitorId = () => {
         let id = localStorage.getItem('gc_visitor_id');
         if (!id) { id = uid(); localStorage.setItem('gc_visitor_id', id); }
@@ -141,8 +140,8 @@
     }
     function toggleEye() {
         const p = $('authPass'), iconEl = $('eyeIcon');
-        if (p.type === 'password') { p.type = 'text'; iconEl.innerHTML = gcIcon('eye-slash'); }
-        else { p.type = 'password'; iconEl.innerHTML = gcIcon('eye'); }
+        if (p.type === 'password') { p.type = 'text'; iconEl.className = 'fas fa-eye-slash text-xs'; }
+        else { p.type = 'password'; iconEl.className = 'fas fa-eye text-xs'; }
     }
     function showErr(t) { $('authErrText').textContent = t; $('authErr').classList.add('show'); $('authOk').classList.remove('show'); }
     function showOk(t) { $('authOkText').textContent = t; $('authOk').classList.add('show'); $('authErr').classList.remove('show'); }
@@ -159,7 +158,7 @@
         $('btnReg').disabled = true;
         showOk('Создаём аккаунт...');
         try {
-            const data = await authApi('glosscheck_chat_register', { name, email, password: pass });
+            await authApi('glosscheck_chat_register', { name, email, password: pass });
             showOk('Аккаунт создан. Загружаем ваши чаты...');
             setTimeout(() => window.location.reload(), 450);
         } catch (err) {
@@ -179,7 +178,7 @@
 
         $('btnLogin').disabled = true;
         try {
-            const data = await authApi('glosscheck_chat_login', { email, password: pass });
+            await authApi('glosscheck_chat_login', { email, password: pass });
             showOk('Вход выполнен. Загружаем ваши чаты...');
             setTimeout(() => window.location.reload(), 450);
         } catch (err) {
@@ -375,10 +374,12 @@
             const active = chat.id === curChatId;
             const menuOpen = chatMenuOpenId === chat.id;
             const last = chat.messages.length > 0 ? chat.messages[chat.messages.length - 1].content.slice(0, 32) + (chat.messages[chat.messages.length - 1].content.length > 32 ? '...' : '') : 'Пустой диалог';
+            const chatIcon = chat.pinned ? 'thumbtack' : 'message';
+            const chatIconCls = chat.pinned ? 'text-[10px] mt-1 flex-shrink-0 text-accent/80' : 'text-[10px] mt-1 flex-shrink-0 text-muted/80';
             html += `
                 <div class="chat-item ${active ? 'active' : ''}" onclick="window.GCApp.openChat('${chat.id}')" title="${esc(chat.title)}">
                     <div class="flex items-start gap-2.5">
-                        ${ic(chat.pinned ? 'thumbtack' : 'comments', 'text-[10px] mt-1 flex-shrink-0' + (chat.pinned ? ' text-accent/80' : ' text-muted/80'))}
+                        ${ic(chatIcon, chatIconCls)}
                         <div class="sidebar-label flex-1 min-w-0">
                             <p class="text-[13px] font-medium truncate ${active ? 'text-accent' : ''}">${esc(chat.title)}</p>
                             <div class="flex items-center gap-2 mt-0.5">
@@ -436,7 +437,6 @@
         }
     }
 
-    /* ===== Guest banner ===== */
     function dismissBanner() {
         bannerDismissed = true;
         $('guestBanner').classList.add('hidden');
@@ -601,7 +601,6 @@
         applySidebarCollapse();
     }
 
-    /* ===== Refresh UI ===== */
     function refreshUI() {
         renderChatList();
         renderSidebarFooter();
@@ -683,7 +682,6 @@
         $('msgInput').focus();
     })();
 
-    /* Expose to window for inline onclick handlers */
     window.GCApp = {
         openAuthModal,
         closeAuthModal,

@@ -441,10 +441,10 @@ $theme_uri = get_template_directory_uri();
                             </button>
                         </div>
                         <div class="text-center text-[11px] text-muted/75 mt-2 space-y-1">
-                            <p>Можно прикрепить фото продукта (JPG, PNG, WebP, до 10 МБ)</p>
+                            <p>Можно прикрепить фото (JPG, PNG, WebP), .txt или .pdf (до 10 МБ)</p>
                             <p class="hidden sm:block">GlossCheck — информационный сервис. Может допускать ошибки. Не используйте для медицинских решений и всегда проверяйте важную информацию.</p>
                         </div>
-                        <input id="fileInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif,.txt" aria-hidden="true">
+                        <input id="fileInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif,.txt,text/plain,.pdf,application/pdf" aria-hidden="true">
                     </div>
                 </footer>
             </div>
@@ -499,6 +499,7 @@ $theme_uri = get_template_directory_uri();
         let abortCtrl = null;
         let pendingImage = null;
         let pendingFileText = null;
+        let pendingFileType = null; // 'txt' | 'pdf'
         let sugVisible = false;
         let serverChats = [];
         let authTab = 'login';
@@ -509,6 +510,27 @@ $theme_uri = get_template_directory_uri();
         const FILE_MAX_COUNT = 50;
         const FILE_ALLOWED_EXTENSIONS = ['jpg','jpeg','png','webp','gif','bmp','tif','tiff','heic','pdf','doc','docx','txt','rtf','csv','xls','xlsx','ppt','pptx'];
         function formatMb(bytes) { return (bytes / 1024 / 1024).toFixed(1).replace('.0', ''); }
+
+        async function extractPdfText(file) {
+            if (!window.pdfjsLib) {
+                await new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                    s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; resolve(); };
+                    s.onerror = reject;
+                    document.head.appendChild(s);
+                });
+            }
+            const buf = await file.arrayBuffer();
+            const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+            let text = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(it => it.str).join(' ') + '\n';
+            }
+            return text.trim();
+        }
 
         function ownerKey() {
             return user ? `wp:${user.id || user.email}` : `guest:${getVisitorId()}`;
@@ -954,7 +976,9 @@ $theme_uri = get_template_directory_uri();
             const w = c.querySelector('.flex.flex-col.items-center');
             if (w) w.remove();
             const imgHtml = imageData ? `<img src="${imageData}" class="max-h-48 rounded-xl mb-2 cursor-pointer" onclick="window.open(this.src,'_blank')">` : '';
-            const fileHtml = fileText ? `<div class="flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-[#050507]/20"><i class="fas fa-file-lines text-xs"></i><span class="text-xs font-medium">Текстовый файл</span><span class="text-[10px] opacity-60">${fileText.length} символов</span></div>` : '';
+            const fileLabel = pendingFileType === 'pdf' ? 'PDF файл' : 'Текстовый файл';
+            const fileIcon = pendingFileType === 'pdf' ? 'fa-file-pdf' : 'fa-file-lines';
+            const fileHtml = fileText ? `<div class="flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-[#050507]/20"><i class="fas ${fileIcon} text-xs"></i><span class="text-xs font-medium">${fileLabel}</span><span class="text-[10px] opacity-60">${fileText.length} символов</span></div>` : '';
             c.insertAdjacentHTML('beforeend', `<div class="flex justify-end gap-2.5 msg-enter"><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-user bg-accent text-[#050507] rounded-2xl rounded-br-sm px-4 py-3">${imgHtml}${fileHtml}<p class="text-sm leading-relaxed font-medium">${esc(text)}</p></div><p class="text-[11px] text-muted/75 mt-1.5 text-right pr-1">${t}</p></div><div class="w-8 h-8 rounded-full bg-accent/15 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-user text-accent text-[11px]"></i></div></div>`);
             scrollDown();
             history.push({ role: 'user', content: text, time: t });
@@ -1049,6 +1073,7 @@ $theme_uri = get_template_directory_uri();
             abortCtrl = null;
             pendingImage = null;
             pendingFileText = null;
+            pendingFileType = null;
             updateSendBtn();
             updateAttachIndicator();
             inp.focus();
@@ -1081,7 +1106,7 @@ $theme_uri = get_template_directory_uri();
         $('stopBtn').addEventListener('click', stopGeneration);
         $('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
         $('attachBtn').addEventListener('click', () => $('fileInput').click());
-        $('fileInput').addEventListener('change', function() {
+        $('fileInput').addEventListener('change', async function() {
             const file = this.files[0];
             this.value = '';
             if (!file) return;
@@ -1098,12 +1123,25 @@ $theme_uri = get_template_directory_uri();
                 const reader = new FileReader();
                 reader.onload = e => {
                     pendingFileText = e.target.result.slice(0, 8000);
+                    pendingFileType = 'txt';
                     updateAttachIndicator();
                     toast('Текстовый файл прикреплён', 'success');
                 };
                 reader.readAsText(file);
+            } else if (file.name.endsWith('.pdf') || file.type === 'application/pdf') {
+                toast('Извлекаем текст из PDF...', 'success');
+                try {
+                    const text = await extractPdfText(file);
+                    if (!text) { toast('PDF не содержит текста (возможно, скан)', 'error'); return; }
+                    pendingFileText = text.slice(0, 8000);
+                    pendingFileType = 'pdf';
+                    updateAttachIndicator();
+                    toast('PDF прикреплён', 'success');
+                } catch (err) {
+                    toast('Не удалось прочитать PDF', 'error');
+                }
             } else {
-                toast('Поддерживаются только изображения и .txt файлы', 'error');
+                toast('Поддерживаются изображения, .txt и .pdf файлы', 'error');
             }
         });
         function updateAttachIndicator() {
@@ -1120,7 +1158,8 @@ $theme_uri = get_template_directory_uri();
                     html += `<div class="relative group"><img src="${pendingImage}" class="h-10 w-10 rounded-lg object-cover"><button onclick="removeAttach('image')" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#050507] text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" type="button"><i class="fas fa-xmark"></i></button></div>`;
                 }
                 if (pendingFileText) {
-                    html += `<div class="relative group flex items-center gap-1.5 px-2 py-1 rounded-lg bg-card border border-border"><i class="fas fa-file-lines text-xs text-accent"></i><span class="text-[11px] text-muted">${pendingFileText.length} символов</span><button onclick="removeAttach('file')" class="ml-1 text-muted/60 hover:text-[#f87171] transition-colors cursor-pointer" type="button"><i class="fas fa-xmark text-[10px]"></i></button></div>`;
+                    const icon = pendingFileType === 'pdf' ? 'fa-file-pdf' : 'fa-file-lines';
+                    html += `<div class="relative group"><div class="h-10 w-10 rounded-lg bg-card border border-border flex items-center justify-center"><i class="fas ${icon} text-sm text-accent"></i></div><button onclick="removeAttach('file')" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#050507] text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" type="button"><i class="fas fa-xmark"></i></button></div>`;
                 }
                 preview.innerHTML = html;
             } else {
@@ -1133,7 +1172,7 @@ $theme_uri = get_template_directory_uri();
         }
         function removeAttach(type) {
             if (type === 'image') pendingImage = null;
-            if (type === 'file') pendingFileText = null;
+            if (type === 'file') { pendingFileText = null; pendingFileType = null; }
             updateAttachIndicator();
         }
 
