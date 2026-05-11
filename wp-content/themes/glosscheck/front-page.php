@@ -433,6 +433,9 @@ $theme_uri = get_template_directory_uri();
                             <button id="sendBtn" class="send-btn w-12 h-12 rounded-2xl bg-accent text-[#05100b] flex items-center justify-center flex-shrink-0" aria-label="Отправить" disabled>
                                 <i class="fas fa-arrow-up text-xs sm:text-sm font-bold"></i>
                             </button>
+                            <button id="stopBtn" class="send-btn w-12 h-12 rounded-2xl bg-accent text-[#05100b] items-center justify-center flex-shrink-0" style="display:none" aria-label="Остановить" type="button">
+                                <i class="fas fa-stop text-xs sm:text-sm font-bold"></i>
+                            </button>
                         </div>
                         <div class="text-center text-[11px] text-muted/75 mt-2 space-y-1">
                             <p>В этом режиме анализируется только текст. Можно выбрать документы или изображения: максимум 50 файлов, до 100 МБ каждый.</p>
@@ -490,6 +493,7 @@ $theme_uri = get_template_directory_uri();
         let curChatId = null;
         let history = [];         // текущие сообщения { role, content, time }
         let typing = false;
+        let abortCtrl = null;
         let sugVisible = false;
         let serverChats = [];
         let authTab = 'login';
@@ -505,7 +509,7 @@ $theme_uri = get_template_directory_uri();
             return user ? `wp:${user.id || user.email}` : `guest:${getVisitorId()}`;
         }
 
-        async function chatApi(action, data = {}) {
+        async function chatApi(action, data = {}, signal) {
             const payload = new URLSearchParams();
             payload.append('action', action);
             payload.append('nonce', GC_CHAT.nonce);
@@ -516,6 +520,7 @@ $theme_uri = get_template_directory_uri();
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
                 body: payload.toString(),
+                signal,
             });
             const json = await res.json().catch(() => null);
             if (!res.ok || !json || !json.success) {
@@ -905,7 +910,7 @@ $theme_uri = get_template_directory_uri();
                 if (m.role === 'user') {
                     html += `<div class="flex justify-end gap-2.5"><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-user bg-accent text-[#050507] rounded-2xl rounded-br-sm px-4 py-3"><p class="text-sm leading-relaxed font-medium">${esc(m.content)}</p></div><p class="text-[11px] text-muted/75 mt-1.5 text-right pr-1">${t}</p></div><div class="w-8 h-8 rounded-full bg-accent/15 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-user text-accent text-[11px]"></i></div></div>`;
                 } else {
-                    html += `<div class="flex gap-2.5"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><p class="text-sm leading-relaxed text-[var(--text)]">${esc(m.content)}</p></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="${esc(m.content)}" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`;
+                    html += `<div class="flex gap-2.5"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><div class="text-sm leading-relaxed text-[var(--text)] msg-md">${renderMd(m.content)}</div></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="${esc(m.content)}" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`;
                 }
             });
             c.innerHTML = html;
@@ -957,11 +962,11 @@ $theme_uri = get_template_directory_uri();
 
         async function addAIMsg(text) {
             const id = 'ai-' + Date.now(), t = getTime();
-            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><p class="text-sm leading-relaxed text-[var(--text)]" id="${id}-t"></p></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`);
+            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><div class="text-sm leading-relaxed text-[var(--text)] msg-md" id="${id}-t"></div></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`);
             const el = $(id + '-t');
             if (!el) return;
             for (let i = 0; i < text.length; i++) {
-                el.textContent += text[i];
+                el.innerHTML = renderMd(text.slice(0, i + 1));
                 if (i % 3 === 0) scrollDown();
                 await new Promise(r => setTimeout(r, 10 + Math.random() * 15));
             }
@@ -972,8 +977,8 @@ $theme_uri = get_template_directory_uri();
             bindCopyButtons();
         }
 
-        async function requestAI(text) {
-            return chatApi('glosscheck_chat_send', { message: text, chat_id: curChatId || '' });
+        async function requestAI(text, signal) {
+            return chatApi('glosscheck_chat_send', { message: text, chat_id: curChatId || '' }, signal);
         }
 
         function bindCopyButtons() {
@@ -996,8 +1001,10 @@ $theme_uri = get_template_directory_uri();
             const inp = $('msgInput'), text = inp.value.trim();
             if (!text || typing) return;
             typing = true;
+            abortCtrl = new AbortController();
             $('sendBtn').disabled = true;
             inp.value = '';
+            updateSendBtn();
 
             let tpId = null;
             try {
@@ -1005,7 +1012,7 @@ $theme_uri = get_template_directory_uri();
                 await new Promise(r => setTimeout(r, 250));
                 tpId = showTypingIndicator();
 
-                const data = await requestAI(text);
+                const data = await requestAI(text, abortCtrl.signal);
                 const tpEl = $(tpId); if (tpEl) tpEl.remove();
                 await addAIMsg(data.answer);
                 if (data.chat) {
@@ -1015,20 +1022,50 @@ $theme_uri = get_template_directory_uri();
                 persistMessages([...history]);
             } catch (err) {
                 const tpEl = tpId ? $(tpId) : null; if (tpEl) tpEl.remove();
-                const msg = err && err.message ? err.message : 'Не удалось получить ответ DeepSeek.';
-                toast(msg, 'error');
-                await addAIMsg('Пока не могу ответить через DeepSeek: ' + msg);
-                persistMessages([...history]);
+                if (err.name === 'AbortError') {
+                    if (history.length > 0 && history[history.length - 1].role === 'user') {
+                        await addAIMsg('⏹ Генерация остановлена.');
+                    }
+                    persistMessages([...history]);
+                } else {
+                    const msg = err && err.message ? err.message : 'Не удалось получить ответ.';
+                    toast(msg, 'error');
+                    await addAIMsg('Пока не могу ответить: ' + msg);
+                    persistMessages([...history]);
+                }
             }
 
             typing = false;
+            abortCtrl = null;
             updateSendBtn();
             inp.focus();
         }
 
-        function updateSendBtn() { $('sendBtn').disabled = !$('msgInput').value.trim() || typing; }
+        function stopGeneration() {
+            if (abortCtrl) abortCtrl.abort();
+        }
+
+        function updateSendBtn() {
+            $('sendBtn').disabled = !$('msgInput').value.trim() || typing;
+            $('stopBtn').style.display = typing ? 'flex' : 'none';
+            $('sendBtn').style.display = typing ? 'none' : 'flex';
+        }
+        function renderMd(text) {
+            return esc(text)
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/`([^`]+)`/g, '<code class="bg-card px-1.5 py-0.5 rounded text-accent text-[13px]">$1</code>')
+                .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-3 mb-1">$1</h3>')
+                .replace(/^## (.+)$/gm, '<h3 class="text-base font-semibold mt-3 mb-1">$1</h3>')
+                .replace(/^# (.+)$/gm, '<h3 class="text-base font-semibold mt-3 mb-1">$1</h3>')
+                .replace(/^[-•] (.+)$/gm, '<div class="flex gap-2 ml-2"><span class="text-accent mt-0.5">•</span><span>$1</span></div>')
+                .replace(/^\d+\. (.+)$/gm, '<div class="ml-2">$&</div>')
+                .replace(/\n\n/g, '</p><p class="mt-2">')
+                .replace(/\n/g, '<br>');
+        }
         $('msgInput').addEventListener('input', updateSendBtn);
         $('sendBtn').addEventListener('click', sendMessage);
+        $('stopBtn').addEventListener('click', stopGeneration);
         $('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
         $('attachBtn').addEventListener('click', () => $('fileInput').click());
         $('fileInput').addEventListener('change', function() {
