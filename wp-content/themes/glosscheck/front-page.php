@@ -425,6 +425,9 @@ $theme_uri = get_template_directory_uri();
                 <!-- Ввод -->
                 <footer class="composer-shell border-t border-border/50 px-4 sm:px-6 py-5 backdrop-blur-sm flex-shrink-0">
                     <div class="max-w-3xl mx-auto">
+                        <div id="attachBar" class="hidden flex items-center gap-2 mb-2 px-1">
+                            <div id="attachPreview" class="flex items-center gap-2"></div>
+                        </div>
                         <div class="input-wrap flex items-center gap-2.5 sm:gap-3 bg-card rounded-[22px] border border-border px-4 sm:px-5 py-3 sm:py-3.5">
                             <button id="attachBtn" class="attach-btn flex-shrink-0" type="button" title="Прикрепить файл" aria-label="Прикрепить файл">
                                 <i class="fas fa-paperclip text-sm"></i>
@@ -438,10 +441,10 @@ $theme_uri = get_template_directory_uri();
                             </button>
                         </div>
                         <div class="text-center text-[11px] text-muted/75 mt-2 space-y-1">
-                            <p>В этом режиме анализируется только текст. Можно выбрать документы или изображения: максимум 50 файлов, до 100 МБ каждый.</p>
+                            <p>Можно прикрепить фото продукта (JPG, PNG, WebP, до 10 МБ)</p>
                             <p class="hidden sm:block">GlossCheck — информационный сервис. Может допускать ошибки. Не используйте для медицинских решений и всегда проверяйте важную информацию.</p>
                         </div>
-                        <input id="fileInput" class="hidden" type="file" multiple accept="image/*,.pdf,.doc,.docx,.txt,.rtf,.csv,.xls,.xlsx,.ppt,.pptx" aria-hidden="true">
+                        <input id="fileInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif,.txt" aria-hidden="true">
                     </div>
                 </footer>
             </div>
@@ -494,6 +497,8 @@ $theme_uri = get_template_directory_uri();
         let history = [];         // текущие сообщения { role, content, time }
         let typing = false;
         let abortCtrl = null;
+        let pendingImage = null;
+        let pendingFileText = null;
         let sugVisible = false;
         let serverChats = [];
         let authTab = 'login';
@@ -943,12 +948,14 @@ $theme_uri = get_template_directory_uri();
         }
 
         /* ===== ОТПРАВКА ===== */
-        function addUserMsg(text) {
+        function addUserMsg(text, imageData, fileText) {
             removeSuggestions();
             const c = $('msgContainer'), t = getTime();
             const w = c.querySelector('.flex.flex-col.items-center');
             if (w) w.remove();
-            c.insertAdjacentHTML('beforeend', `<div class="flex justify-end gap-2.5 msg-enter"><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-user bg-accent text-[#050507] rounded-2xl rounded-br-sm px-4 py-3"><p class="text-sm leading-relaxed font-medium">${esc(text)}</p></div><p class="text-[11px] text-muted/75 mt-1.5 text-right pr-1">${t}</p></div><div class="w-8 h-8 rounded-full bg-accent/15 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-user text-accent text-[11px]"></i></div></div>`);
+            const imgHtml = imageData ? `<img src="${imageData}" class="max-h-48 rounded-xl mb-2 cursor-pointer" onclick="window.open(this.src,'_blank')">` : '';
+            const fileHtml = fileText ? `<div class="flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-[#050507]/20"><i class="fas fa-file-lines text-xs"></i><span class="text-xs font-medium">Текстовый файл</span><span class="text-[10px] opacity-60">${fileText.length} символов</span></div>` : '';
+            c.insertAdjacentHTML('beforeend', `<div class="flex justify-end gap-2.5 msg-enter"><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-user bg-accent text-[#050507] rounded-2xl rounded-br-sm px-4 py-3">${imgHtml}${fileHtml}<p class="text-sm leading-relaxed font-medium">${esc(text)}</p></div><p class="text-[11px] text-muted/75 mt-1.5 text-right pr-1">${t}</p></div><div class="w-8 h-8 rounded-full bg-accent/15 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-user text-accent text-[11px]"></i></div></div>`);
             scrollDown();
             history.push({ role: 'user', content: text, time: t });
         }
@@ -978,7 +985,10 @@ $theme_uri = get_template_directory_uri();
         }
 
         async function requestAI(text, signal) {
-            return chatApi('glosscheck_chat_send', { message: text, chat_id: curChatId || '' }, signal);
+            const data = { message: text, chat_id: curChatId || '' };
+            if (pendingImage) data.image_data = pendingImage;
+            if (pendingFileText) data.file_text = pendingFileText;
+            return chatApi('glosscheck_chat_send', data, signal);
         }
 
         function bindCopyButtons() {
@@ -1008,7 +1018,7 @@ $theme_uri = get_template_directory_uri();
 
             let tpId = null;
             try {
-                addUserMsg(text);
+                addUserMsg(text, pendingImage, pendingFileText);
                 await new Promise(r => setTimeout(r, 250));
                 tpId = showTypingIndicator();
 
@@ -1037,7 +1047,10 @@ $theme_uri = get_template_directory_uri();
 
             typing = false;
             abortCtrl = null;
+            pendingImage = null;
+            pendingFileText = null;
             updateSendBtn();
+            updateAttachIndicator();
             inp.focus();
         }
 
@@ -1069,16 +1082,60 @@ $theme_uri = get_template_directory_uri();
         $('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
         $('attachBtn').addEventListener('click', () => $('fileInput').click());
         $('fileInput').addEventListener('change', function() {
-            const files = Array.from(this.files);
+            const file = this.files[0];
             this.value = '';
-            if (files.length > FILE_MAX_COUNT) { toast(`Максимум ${FILE_MAX_COUNT} файлов за раз`, 'error'); return; }
-            for (const f of files) {
-                const ext = f.name.split('.').pop().toLowerCase();
-                if (!FILE_ALLOWED_EXTENSIONS.includes(ext)) { toast(`Формат .${ext} не поддерживается`, 'error'); return; }
-                if (f.size > FILE_MAX_SIZE) { toast(`Файл ${f.name} слишком большой: ${formatMb(f.size)} МБ (макс. 100 МБ)`, 'error'); return; }
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) { toast('Файл слишком большой (макс. 10 МБ)', 'error'); return; }
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    pendingImage = e.target.result;
+                    updateAttachIndicator();
+                    toast('Фото прикреплено', 'success');
+                };
+                reader.readAsDataURL(file);
+            } else if (file.name.endsWith('.txt') || file.type === 'text/plain') {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    pendingFileText = e.target.result.slice(0, 8000);
+                    updateAttachIndicator();
+                    toast('Текстовый файл прикреплён', 'success');
+                };
+                reader.readAsText(file);
+            } else {
+                toast('Поддерживаются только изображения и .txt файлы', 'error');
             }
-            toast('Файлы выбраны, но пока анализируется только текст. Опишите продукт в сообщении.', 'info');
         });
+        function updateAttachIndicator() {
+            const btn = $('attachBtn');
+            const bar = $('attachBar');
+            const preview = $('attachPreview');
+            if (pendingImage || pendingFileText) {
+                btn.style.color = 'var(--accent)';
+                btn.title = 'Файл прикреплён';
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
+                let html = '';
+                if (pendingImage) {
+                    html += `<div class="relative group"><img src="${pendingImage}" class="h-10 w-10 rounded-lg object-cover"><button onclick="removeAttach('image')" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#050507] text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" type="button"><i class="fas fa-xmark"></i></button></div>`;
+                }
+                if (pendingFileText) {
+                    html += `<div class="relative group flex items-center gap-1.5 px-2 py-1 rounded-lg bg-card border border-border"><i class="fas fa-file-lines text-xs text-accent"></i><span class="text-[11px] text-muted">${pendingFileText.length} символов</span><button onclick="removeAttach('file')" class="ml-1 text-muted/60 hover:text-[#f87171] transition-colors cursor-pointer" type="button"><i class="fas fa-xmark text-[10px]"></i></button></div>`;
+                }
+                preview.innerHTML = html;
+            } else {
+                btn.style.color = '';
+                btn.title = 'Прикрепить файл';
+                bar.classList.add('hidden');
+                bar.classList.remove('flex');
+                preview.innerHTML = '';
+            }
+        }
+        function removeAttach(type) {
+            if (type === 'image') pendingImage = null;
+            if (type === 'file') pendingFileText = null;
+            updateAttachIndicator();
+        }
 
         /* ===== САЙДБАР ===== */
         function openSidebar() { $('sidebar').classList.add('open'); $('sidebarOverlay').classList.add('open'); }
