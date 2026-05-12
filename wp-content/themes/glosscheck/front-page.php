@@ -401,8 +401,8 @@ $theme_uri = get_template_directory_uri();
                     <button class="hamburger-btn w-9 h-9 rounded-xl border border-border flex items-center justify-center text-muted hover:text-[var(--text)] hover:border-[rgba(255,255,255,0.1)] transition-all cursor-pointer flex-shrink-0" onclick="openSidebar()" aria-label="Меню">
                         <i class="fas fa-bars text-sm"></i>
                     </button>
-                    <div class="sm:hidden flex-1 flex justify-center min-w-0">
-                        <img src="<?php echo esc_url($theme_uri); ?>/assets/images/logo.webp" alt="GlossCheck" class="h-11 w-auto">
+                    <div class="sm:hidden flex-1 flex justify-center min-w-0 px-2">
+                        <img src="<?php echo esc_url($theme_uri); ?>/assets/images/logo.webp" alt="GlossCheck" class="h-9 w-auto">
                     </div>
                     <div class="hidden sm:flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full bg-accent status-dot"></div><span class="text-sm font-semibold text-[var(--text)]">Чат с GlossCheck</span>
@@ -437,7 +437,7 @@ $theme_uri = get_template_directory_uri();
                         </div>
                         <div class="text-center text-[11px] text-muted/75 mt-2 space-y-1">
                             <p>Можно прикрепить фото (JPG, PNG, WebP), .txt или .pdf (до 10 МБ)</p>
-                            <p class="hidden sm:block">GlossCheck — информационный сервис. Может допускать ошибки. Не используйте для медицинских решений и всегда проверяйте важную информацию.</p>
+                            <p>GlossCheck — информационный сервис. Может допускать ошибки. Не используйте для медицинских решений и всегда проверяйте важную информацию.</p>
                         </div>
                         <input id="fileInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif,.txt,text/plain,.pdf,application/pdf" aria-hidden="true">
                     </div>
