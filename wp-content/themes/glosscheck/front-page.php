@@ -6,8 +6,8 @@ $theme_uri = get_template_directory_uri();
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="<?php echo esc_url($theme_uri); ?>/assets/images/favicon.svg" type="image/svg+xml">
-    <link rel="shortcut icon" href="<?php echo esc_url($theme_uri); ?>/assets/images/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="<?php echo esc_url($theme_uri); ?>/assets/images/favicon.png" type="image/png">
+    <link rel="shortcut icon" href="<?php echo esc_url($theme_uri); ?>/assets/images/favicon.png" type="image/png">
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="<?php echo esc_url($theme_uri); ?>/assets/css/fa-icons.css">
@@ -190,6 +190,7 @@ $theme_uri = get_template_directory_uri();
             #app.sidebar-collapsed .sidebar .chat-context-menu { display: none!important; }
             #app.sidebar-collapsed .sidebar .sidebar-top { padding: 16px 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
             #app.sidebar-collapsed .sidebar .sidebar-head { flex-direction: column; justify-content: flex-start; align-items: center; gap: 10px; margin-bottom: 0; }
+            #app.sidebar-collapsed .sidebar .sidebar-logo { height: 44px; }
             #app.sidebar-collapsed .sidebar .sidebar-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; }
             #app.sidebar-collapsed .sidebar .sidebar-brand-icon,
             #app.sidebar-collapsed .sidebar .new-chat-btn,
@@ -364,10 +365,7 @@ $theme_uri = get_template_directory_uri();
             <aside class="sidebar custom-scroll" id="sidebar">
                 <div class="sidebar-top p-5 border-b border-border flex-shrink-0">
                     <div class="sidebar-head flex items-center gap-3.5 mb-5">
-                        <div class="sidebar-brand-icon w-11 h-11 rounded-2xl bg-accent/10 flex items-center justify-center border border-accent/20 shadow-[inset_0_1px_0_rgba(255,255,255,.07)] flex-shrink-0">
-                            <i class="fas fa-bolt text-accent text-base"></i>
-                        </div>
-                        <span class="sidebar-label brand-wordmark text-[34px] leading-none">GlossCheck</span>
+                        <img src="<?php echo esc_url($theme_uri); ?>/assets/images/logo.webp" alt="GlossCheck" class="sidebar-logo h-10 w-auto">
                     </div>
                     <div class="sidebar-actions">
                         <button class="new-chat-btn w-full flex items-center justify-center gap-2.5 px-3.5 py-3 rounded-2xl bg-accent/[0.10] border border-accent/20 text-accent text-[14px] font-semibold transition-all hover:bg-accent/[0.15] cursor-pointer" onclick="createNewChat()" title="Новый диалог">
@@ -428,11 +426,11 @@ $theme_uri = get_template_directory_uri();
                         <div id="attachBar" class="hidden flex items-center gap-2 mb-2 px-1">
                             <div id="attachPreview" class="flex items-center gap-2"></div>
                         </div>
-                        <div class="input-wrap flex items-center gap-2.5 sm:gap-3 bg-card rounded-[22px] border border-border px-4 sm:px-5 py-3 sm:py-3.5">
+                        <div class="input-wrap flex items-end gap-2.5 sm:gap-3 bg-card rounded-[22px] border border-border px-4 sm:px-5 py-3 sm:py-3.5">
                             <button id="attachBtn" class="attach-btn flex-shrink-0" type="button" title="Прикрепить файл" aria-label="Прикрепить файл">
                                 <i class="fas fa-paperclip text-sm"></i>
                             </button>
-                            <input type="text" id="msgInput" placeholder="Напишите сообщение..." class="flex-1 bg-transparent outline-none text-base sm:text-lg text-[var(--text)] placeholder-muted" autocomplete="off" aria-label="Сообщение">
+                            <textarea id="msgInput" placeholder="Напишите сообщение..." class="flex-1 bg-transparent outline-none text-base sm:text-lg text-[var(--text)] placeholder-muted resize-none overflow-hidden max-h-40" autocomplete="off" aria-label="Сообщение" rows="1"></textarea>
                             <button id="sendBtn" class="send-btn w-12 h-12 rounded-2xl bg-accent text-[#05100b] flex items-center justify-center flex-shrink-0" aria-label="Отправить" disabled>
                                 <i class="fas fa-arrow-up text-xs sm:text-sm font-bold"></i>
                             </button>
@@ -463,7 +461,15 @@ $theme_uri = get_template_directory_uri();
         const GC_CHAT = <?php echo wp_json_encode([
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('glosscheck_chat_send'),
+            'themeUri' => get_template_directory_uri(),
         ]); ?>;
+
+
+        let userScrolledUp = false;
+        $("chatArea")?.addEventListener("scroll", () => {
+            const el = $("chatArea");
+            userScrolledUp = el.scrollHeight - el.scrollTop - el.clientHeight > 80;
+        });
 
         function scrollDown() {
             requestAnimationFrame(() => {
@@ -937,7 +943,7 @@ $theme_uri = get_template_directory_uri();
                 if (m.role === 'user') {
                     html += `<div class="flex justify-end gap-2.5"><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-user bg-accent text-[#050507] rounded-2xl rounded-br-sm px-4 py-3"><p class="text-sm leading-relaxed font-medium">${esc(m.content)}</p></div><p class="text-[11px] text-muted/75 mt-1.5 text-right pr-1">${t}</p></div><div class="w-8 h-8 rounded-full bg-accent/15 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-user text-accent text-[11px]"></i></div></div>`;
                 } else {
-                    html += `<div class="flex gap-2.5"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><div class="text-sm leading-relaxed text-[var(--text)] msg-md">${renderMd(m.content)}</div></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="${esc(m.content)}" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`;
+                    html += `<div class="flex gap-2.5"><div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center mt-auto overflow-hidden"><img src="${GC_CHAT.themeUri}/assets/images/chat-icon.webp" alt="AI" class="w-full h-full object-contain"></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><div class="text-sm leading-relaxed text-[var(--text)] msg-md">${renderMd(m.content)}</div></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="${esc(m.content)}" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`;
                 }
             });
             c.innerHTML = html;
@@ -948,7 +954,7 @@ $theme_uri = get_template_directory_uri();
         function showWelcome() {
             $('msgContainer').innerHTML = `
                 <div class="flex flex-col items-center text-center mt-6 sm:mt-10 fade-in">
-                    <div class="welcome-mark w-20 h-20 rounded-[28px] bg-accent/10 border border-accent/20 flex items-center justify-center mb-7"><i class="fas fa-bolt text-accent text-2xl"></i></div>
+                    <div class="welcome-mark w-20 h-20 rounded-[28px] bg-accent/10 border border-accent/20 flex items-center justify-center mb-7"><img src="${GC_CHAT.themeUri}/assets/images/gecko.webp" alt="GlossCheck" class="w-14 h-14 object-contain"></div>
                     <p class="text-xs uppercase tracking-[0.22em] text-accent/80 mb-3">GlossCheck AI</p>
                     <h2 class="text-3xl sm:text-4xl font-bold tracking-tight mb-3 text-[var(--text)]">Проверьте продукт</h2>
                     <p class="text-base text-muted max-w-xl leading-relaxed">Проведите глосс-чек, изучите состав и узнайте об ингредиентах</p>
@@ -986,21 +992,27 @@ $theme_uri = get_template_directory_uri();
 
         function showTypingIndicator() {
             const id = 'tp-' + Date.now();
-            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-5 py-4 border border-border/50 flex items-center gap-2"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div><span class="text-xs text-muted ml-1">Анализирую</span></div></div></div>`);
+            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center mt-auto overflow-hidden"><img src="${GC_CHAT.themeUri}/assets/images/chat-icon.webp" alt="AI" class="w-full h-full object-contain"></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-5 py-4 border border-border/50 flex items-center gap-2"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div><span class="text-xs text-muted ml-1">Анализирую</span></div></div></div>`);
             scrollDown();
             return id;
         }
 
         async function addAIMsg(text) {
             const id = 'ai-' + Date.now(), t = getTime();
-            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-8 h-8 rounded-full bg-accent/10 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-robot text-accent text-[11px]"></i></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><div class="text-sm leading-relaxed text-[var(--text)] msg-md" id="${id}-t"></div></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`);
+            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center mt-auto overflow-hidden"><img src="${GC_CHAT.themeUri}/assets/images/chat-icon.webp" alt="AI" class="w-full h-full object-contain"></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><div class="text-sm leading-relaxed text-[var(--text)] msg-md" id="${id}-t"></div></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`);
             const el = $(id + '-t');
             if (!el) return;
-            for (let i = 0; i < text.length; i++) {
-                el.innerHTML = renderMd(text.slice(0, i + 1));
-                if (i % 3 === 0) scrollDown();
-                await new Promise(r => setTimeout(r, 10 + Math.random() * 15));
+            const len = text.length;
+            const step = len > 800 ? 4 : len > 300 ? 3 : 2;
+            const delay = len > 800 ? 5 : len > 300 ? 8 : 12;
+            userScrolledUp = false;
+            for (let i = 0; i < len; i += step) {
+                el.innerHTML = renderMd(text.slice(0, Math.min(i + step, len)));
+                if (!userScrolledUp && i % (step * 2) === 0) scrollDown();
+                await new Promise(r => setTimeout(r, delay));
             }
+            el.innerHTML = renderMd(text);
+            userScrolledUp = false;
             scrollDown();
             history.push({ role: 'assistant', content: text, time: t });
             const copy = $(id)?.querySelector('.copy-answer');
@@ -1038,6 +1050,7 @@ $theme_uri = get_template_directory_uri();
             abortCtrl = new AbortController();
             $('sendBtn').disabled = true;
             inp.value = '';
+            inp.style.height = 'auto';
             updateSendBtn();
 
             let tpId = null;
@@ -1101,10 +1114,15 @@ $theme_uri = get_template_directory_uri();
                 .replace(/\n\n/g, '</p><p class="mt-2">')
                 .replace(/\n/g, '<br>');
         }
-        $('msgInput').addEventListener('input', updateSendBtn);
+        $('msgInput').addEventListener('input', () => { updateSendBtn(); autoResizeInput(); });
         $('sendBtn').addEventListener('click', sendMessage);
         $('stopBtn').addEventListener('click', stopGeneration);
         $('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+        function autoResizeInput() {
+            const ta = $('msgInput');
+            ta.style.height = 'auto';
+            ta.style.height = Math.min(ta.scrollHeight, 160) + 'px';
+        }
         $('attachBtn').addEventListener('click', () => $('fileInput').click());
         $('fileInput').addEventListener('change', async function() {
             const file = this.files[0];
