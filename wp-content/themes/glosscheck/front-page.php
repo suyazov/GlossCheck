@@ -402,7 +402,7 @@ $theme_uri = get_template_directory_uri();
                         <i class="fas fa-bars text-sm"></i>
                     </button>
                     <div class="sm:hidden flex-1 flex justify-center min-w-0">
-                        <img src="<?php echo esc_url($theme_uri); ?>/assets/images/logo.webp" alt="GlossCheck" class="h-16 w-auto">
+                        <img src="<?php echo esc_url($theme_uri); ?>/assets/images/logo.webp" alt="GlossCheck" class="h-11 w-auto">
                     </div>
                     <div class="hidden sm:flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full bg-accent status-dot"></div><span class="text-sm font-semibold text-[var(--text)]">Чат с GlossCheck</span>
