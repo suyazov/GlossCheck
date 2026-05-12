@@ -190,7 +190,7 @@ $theme_uri = get_template_directory_uri();
             #app.sidebar-collapsed .sidebar .chat-context-menu { display: none!important; }
             #app.sidebar-collapsed .sidebar .sidebar-top { padding: 16px 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
             #app.sidebar-collapsed .sidebar .sidebar-head { flex-direction: column; justify-content: flex-start; align-items: center; gap: 10px; margin-bottom: 0; }
-            #app.sidebar-collapsed .sidebar .sidebar-logo { height: 96px; }
+            #app.sidebar-collapsed .sidebar .sidebar-logo { height: 130px; }
             #app.sidebar-collapsed .sidebar .sidebar-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; }
             #app.sidebar-collapsed .sidebar .sidebar-brand-icon,
             #app.sidebar-collapsed .sidebar .new-chat-btn,
@@ -365,7 +365,7 @@ $theme_uri = get_template_directory_uri();
             <aside class="sidebar custom-scroll" id="sidebar">
                 <div class="sidebar-top p-5 border-b border-border flex-shrink-0">
                     <div class="sidebar-head flex items-center justify-center gap-3.5 mb-5">
-                        <img src="<?php echo esc_url($theme_uri); ?>/assets/images/logo.webp" alt="GlossCheck" class="sidebar-logo h-28 w-auto">
+                        <img src="<?php echo esc_url($theme_uri); ?>/assets/images/logo.webp" alt="GlossCheck" class="sidebar-logo h-[151px] w-auto">
                     </div>
                     <div class="sidebar-actions">
                         <button class="new-chat-btn w-full flex items-center justify-center gap-2.5 px-3.5 py-3 rounded-2xl bg-accent/[0.10] border border-accent/20 text-accent text-[14px] font-semibold transition-all hover:bg-accent/[0.15] cursor-pointer" onclick="createNewChat()" title="Новый диалог">
