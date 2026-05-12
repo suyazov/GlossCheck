@@ -1114,7 +1114,7 @@ $theme_uri = get_template_directory_uri();
         $('msgInput').addEventListener('input', () => { updateSendBtn(); autoResizeInput(); });
         $('sendBtn').addEventListener('click', sendMessage);
         $('stopBtn').addEventListener('click', stopGeneration);
-        $('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+        $('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && window.innerWidth >= 768) { e.preventDefault(); sendMessage(); } });
         function autoResizeInput() {
             const ta = $('msgInput');
             ta.style.height = 'auto';
