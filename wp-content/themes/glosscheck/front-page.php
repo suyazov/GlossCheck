@@ -363,7 +363,7 @@ $theme_uri = get_template_directory_uri();
 
             <!-- САЙДБАР -->
             <aside class="sidebar custom-scroll" id="sidebar">
-                <div class="sidebar-top p-5 border-b border-border flex-shrink-0">
+                <div class="sidebar-top p-1 border-b border-border flex-shrink-0">
                     <div class="sidebar-head flex items-center justify-center gap-3.5 mb-5">
                         <img src="<?php echo esc_url($theme_uri); ?>/assets/images/logo.webp" alt="GlossCheck" class="sidebar-logo h-[151px] w-full object-contain px-2">
                     </div>
