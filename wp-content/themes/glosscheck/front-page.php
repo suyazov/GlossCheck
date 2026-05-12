@@ -403,7 +403,7 @@ $theme_uri = get_template_directory_uri();
                             <i class="fas fa-bars text-sm"></i>
                         </button>
                         <div class="sm:hidden">
-                            <h2 class="brand-wordmark text-base font-semibold tracking-tight">GlossCheck</h2>
+                            <img src="<?php echo esc_url($theme_uri); ?>/assets/images/logo.webp" alt="GlossCheck" class="h-8 w-auto">
                             <div class="flex items-center gap-1.5 mt-0.5"><div class="w-1.5 h-1.5 rounded-full bg-accent status-dot"></div><span class="text-[10px] text-muted">GlossCheck AI</span></div>
                         </div>
                         <div class="hidden sm:block">
@@ -943,7 +943,7 @@ $theme_uri = get_template_directory_uri();
                 if (m.role === 'user') {
                     html += `<div class="flex justify-end gap-2.5"><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-user bg-accent text-[#050507] rounded-2xl rounded-br-sm px-4 py-3"><p class="text-sm leading-relaxed font-medium">${esc(m.content)}</p></div><p class="text-[11px] text-muted/75 mt-1.5 text-right pr-1">${t}</p></div><div class="w-8 h-8 rounded-full bg-accent/15 flex-shrink-0 flex items-center justify-center mt-auto"><i class="fas fa-user text-accent text-[11px]"></i></div></div>`;
                 } else {
-                    html += `<div class="flex gap-2.5"><div class="w-32 h-32 rounded-full flex-shrink-0 flex items-center justify-center mt-auto overflow-hidden bg-[rgba(14,25,22,0.84)] border border-[rgba(224,244,229,0.16)]"><img src="${GC_CHAT.themeUri}/assets/images/chat-icon.webp" alt="AI" class="w-28 h-28 object-contain"></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><div class="text-sm leading-relaxed text-[var(--text)] msg-md">${renderMd(m.content)}</div></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="${esc(m.content)}" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`;
+                    html += `<div class="flex gap-2.5"><div class="w-[120px] h-[120px] rounded-full flex-shrink-0 flex items-center justify-center mt-auto overflow-hidden bg-[rgba(14,25,22,0.84)] border border-[rgba(224,244,229,0.16)]"><img src="${GC_CHAT.themeUri}/assets/images/chat-icon.webp" alt="AI" class="w-[108px] h-[108px] object-contain"></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><div class="text-sm leading-relaxed text-[var(--text)] msg-md">${renderMd(m.content)}</div></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="${esc(m.content)}" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`;
                 }
             });
             c.innerHTML = html;
@@ -992,14 +992,14 @@ $theme_uri = get_template_directory_uri();
 
         function showTypingIndicator() {
             const id = 'tp-' + Date.now();
-            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-32 h-32 rounded-full flex-shrink-0 flex items-center justify-center mt-auto overflow-hidden bg-[rgba(14,25,22,0.84)] border border-[rgba(224,244,229,0.16)]"><img src="${GC_CHAT.themeUri}/assets/images/chat-icon.webp" alt="AI" class="w-28 h-28 object-contain"></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-5 py-4 border border-border/50 flex items-center gap-2"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div><span class="text-xs text-muted ml-1">Анализирую</span></div></div></div>`);
+            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-[120px] h-[120px] rounded-full flex-shrink-0 flex items-center justify-center mt-auto overflow-hidden bg-[rgba(14,25,22,0.84)] border border-[rgba(224,244,229,0.16)]"><img src="${GC_CHAT.themeUri}/assets/images/chat-icon.webp" alt="AI" class="w-[108px] h-[108px] object-contain"></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-5 py-4 border border-border/50 flex items-center gap-2"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div><span class="text-xs text-muted ml-1">Анализирую</span></div></div></div>`);
             scrollDown();
             return id;
         }
 
         async function addAIMsg(text) {
             const id = 'ai-' + Date.now(), t = getTime();
-            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-32 h-32 rounded-full flex-shrink-0 flex items-center justify-center mt-auto overflow-hidden bg-[rgba(14,25,22,0.84)] border border-[rgba(224,244,229,0.16)]"><img src="${GC_CHAT.themeUri}/assets/images/chat-icon.webp" alt="AI" class="w-28 h-28 object-contain"></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><div class="text-sm leading-relaxed text-[var(--text)] msg-md" id="${id}-t"></div></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`);
+            $('msgContainer').insertAdjacentHTML('beforeend', `<div class="flex gap-2.5 msg-enter" id="${id}"><div class="w-[120px] h-[120px] rounded-full flex-shrink-0 flex items-center justify-center mt-auto overflow-hidden bg-[rgba(14,25,22,0.84)] border border-[rgba(224,244,229,0.16)]"><img src="${GC_CHAT.themeUri}/assets/images/chat-icon.webp" alt="AI" class="w-[108px] h-[108px] object-contain"></div><div class="max-w-[82%] sm:max-w-[75%]"><div class="msg-bubble-ai bg-card rounded-2xl rounded-bl-sm px-4 py-3 border border-border/50"><div class="text-sm leading-relaxed text-[var(--text)] msg-md" id="${id}-t"></div></div><div class="flex items-center gap-2 mt-1.5 pl-1"><p class="text-[11px] text-muted/75">${t}</p><button class="copy-answer text-[11px] text-muted/80 hover:text-accent transition-colors" data-copy="" type="button"><i class="fas fa-copy text-[10px] mr-1"></i>Скопировать</button></div></div></div>`);
             const el = $(id + '-t');
             if (!el) return;
             const len = text.length;
